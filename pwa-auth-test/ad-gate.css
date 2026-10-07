@@ -1,0 +1,138 @@
+#adGate {
+  position: fixed;
+  inset: 0;
+  z-index: 2000000;
+  display: flex;
+  justify-content: center;
+  padding: 36px 24px;
+  background: #fff;
+  color: #182033;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+#adGate.hidden { display: none; }
+#adGate .ad-login { width: min(480px, 100%); }
+#adGate h1 {
+  text-align: center;
+  font-size: 42px;
+  line-height: 1.12;
+  letter-spacing: -1px;
+  margin-bottom: 24px;
+  font-weight: 750;
+}
+#adGate .ad-subtitle {
+  text-align: center;
+  font-size: 19px;
+  line-height: 1.45;
+  margin-bottom: 36px;
+}
+#adGate .ad-field { margin-bottom: 18px; }
+#adGate label { display: block; font-size: 17px; font-weight: 700; margin-bottom: 7px; }
+#adGate .ad-required { color: #b42318; }
+#adGate input[type="text"],
+#adGate input[type="password"] {
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid #8d95a3;
+  border-radius: 5px;
+  padding: 0 14px;
+  font-size: 17px;
+  color: #182033;
+  background: #fff;
+  outline: none;
+}
+#adGate input:focus { border-color: #2369dc; box-shadow: 0 0 0 2px rgba(35, 105, 220, .12); }
+#adGate .ad-password { position: relative; }
+#adGate .ad-password input { padding-right: 54px; }
+#adGate .ad-eye {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #5e636d;
+}
+#adGate .ad-remember {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 8px 0 28px;
+  font-size: 16px;
+  font-weight: 400;
+}
+#adGate .ad-remember input {
+  appearance: none;
+  width: 21px;
+  min-height: 21px;
+  height: 21px;
+  margin: 0;
+  border: 1.5px solid #9aa1ad;
+  border-radius: 4px;
+  position: relative;
+}
+#adGate .ad-remember input:checked { border-color: #2369dc; background: #2369dc; }
+#adGate .ad-remember input:checked::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+#adGate .ad-btn {
+  width: 100%;
+  min-height: 49px;
+  border-radius: 5px;
+  font-size: 19px;
+  cursor: pointer;
+}
+#adGate .ad-btn:disabled { opacity: .55; cursor: default; }
+#adGate .ad-btn-primary { border: 1px solid #2369dc; background: #2369dc; color: #fff; font-weight: 700; }
+#adGate .ad-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 36px 0;
+  color: #303645;
+  font-size: 15px;
+}
+#adGate .ad-divider::before,
+#adGate .ad-divider::after { content: ""; flex: 1; height: 1px; background: #e3e5e9; }
+#adGate .ad-btn-sso {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #151922;
+  box-shadow: 0 2px 3px rgba(16, 24, 40, .12);
+  font-weight: 500;
+}
+#adGate .ad-status {
+  display: none;
+  margin-top: 22px;
+  padding: 13px 14px;
+  border-radius: 8px;
+  background: #f5f7fb;
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#adGate .ad-status.visible { display: block; }
+#adGate .ad-status.error { background: #fff2f0; color: #b42318; }
+#adGate .ad-note {
+  margin-top: 26px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #5b6474;
+  text-align: center;
+}
+@media (max-width: 520px) {
+  #adGate { padding: 28px 20px; }
+  #adGate h1 { font-size: 38px; }
+  #adGate .ad-subtitle { font-size: 18px; margin-bottom: 30px; }
+}

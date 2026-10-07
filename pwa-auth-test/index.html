@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./ad-gate.css" />
+  <style>#adGate{position:fixed;inset:0;z-index:2000000;background:#fff;display:flex}#adGate.hidden{display:none}</style>
+  <title>Согласование ЗНО</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent:#0071E3; --accent-dim:rgba(0,113,227,.12); --accent-dark:#005BB5;
+      --danger:#D92D20; --danger-dim:rgba(217,45,32,.12);
+      --success:#0A7F47; --success-dim:rgba(10,127,71,.12);
+      --warning:#B26A00; --warning-dim:rgba(178,106,0,.14);
+      --radius-sm:14px; --radius:22px; --radius-lg:30px;
+      --transition:.24s cubic-bezier(.4,0,.2,1);
+    }
+    [data-theme="light"] {
+      --bg:#F5F5F7; --bg-pattern:radial-gradient(circle at top, rgba(255,255,255,.95), rgba(245,245,247,.92) 45%, rgba(241,242,246,.98));
+      --surface:rgba(255,255,255,.82); --surface-2:rgba(255,255,255,.6);
+      --border:rgba(15,23,42,.08); --text:#1D1D1F; --text-sec:#4B5563; --text-hint:#8E8E93;
+      --header-bg:rgba(248,248,252,.72); --header-border:rgba(15,23,42,.06);
+      --shadow-sm:0 1px 2px rgba(15,23,42,.04);
+      --shadow:0 12px 36px rgba(15,23,42,.08), 0 2px 8px rgba(15,23,42,.04);
+      --shadow-lg:0 22px 48px rgba(15,23,42,.14), 0 4px 14px rgba(15,23,42,.06);
+      --overlay:rgba(17,24,39,.36); --skeleton-1:#E7E7ED; --skeleton-2:#F6F7FB;
+    }
+    [data-theme="dark"] {
+      --bg:#0B0B0F; --bg-pattern:radial-gradient(circle at top, rgba(58,58,66,.36), rgba(11,11,15,.96) 50%);
+      --surface:rgba(28,28,30,.82); --surface-2:rgba(44,44,46,.62);
+      --border:rgba(255,255,255,.08); --text:#F5F5F7; --text-sec:#B0B3BC; --text-hint:#8E8E93;
+      --header-bg:rgba(18,18,22,.72); --header-border:rgba(255,255,255,.06);
+      --shadow-sm:0 1px 3px rgba(0,0,0,.34); --shadow:0 14px 34px rgba(0,0,0,.34);
+      --shadow-lg:0 26px 60px rgba(0,0,0,.5); --overlay:rgba(0,0,0,.56);
+      --skeleton-1:#2C2C2E; --skeleton-2:#3A3A3C;
+    }
+    html, body {
+      height:100%; font-family:'Inter','SF Pro Display','SF Pro Text',system-ui,sans-serif; font-size:15px;
+      color:var(--text); background-color:var(--bg); background-image:var(--bg-pattern);
+      -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    }
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background:radial-gradient(circle at 20% 20%, rgba(10,132,255,.10), transparent 30%),
+                 radial-gradient(circle at 80% 0%, rgba(94,92,230,.10), transparent 28%),
+                 radial-gradient(circle at 50% 100%, rgba(48,209,88,.08), transparent 30%);
+    }
+    .screen { display:none; flex-direction:column; height:100vh; height:100dvh; min-height:100svh; position:relative; z-index:1; overflow:hidden; }
+    .screen.active { display:flex; }
+    .app-header {
+      background:var(--header-bg); border-bottom:1px solid var(--header-border); padding:0 18px; min-height:64px;
+      display:flex; align-items:center; gap:12px; flex-shrink:0; position:sticky; top:0; z-index:10;
+      backdrop-filter:blur(16px) saturate(1.2); -webkit-backdrop-filter:blur(16px) saturate(1.2);
+      box-shadow:0 1px 0 var(--header-border);
+    }
+    .header-title { font-size:17px; font-weight:800; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.3px; }
+    .icon-btn {
+      width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:var(--surface-2);
+      border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-sec); cursor:pointer; flex-shrink:0;
+      transition:background var(--transition), color var(--transition), transform .12s;
+    }
+    .icon-btn:hover { background:var(--surface); color:var(--text); }
+    .icon-btn:active { transform:scale(.94); }
+    .icon-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .refresh-symbol { font-size:20px; line-height:1; font-weight:900; transform:translateY(-1px); }
+    .icon-btn.refreshing .refresh-symbol { animation:refreshSpin .8s linear infinite; }
+    @keyframes refreshSpin { to { transform:translateY(-1px) rotate(360deg); } }
+    .screen-shell { width:min(1180px, 100% - 24px); margin:12px auto 0; display:flex; flex-direction:column; gap:16px; padding-bottom:12px; flex:1; min-height:0; }
+    .filters-dock {
+      flex-shrink:0;
+    }
+    .filters-open-btn {
+      width:100%; min-height:44px; padding:10px 14px; border-radius:18px; border:1.5px solid var(--border);
+      background:var(--header-bg); color:var(--text); font-family:inherit; cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      box-shadow:var(--shadow-sm); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      transition:border-color var(--transition), background var(--transition), transform .15s;
+    }
+    .filters-open-btn:hover { border-color:var(--accent); }
+    .filters-open-btn:active { transform:scale(.995); }
+    .filters-open-main { font-size:13px; font-weight:900; white-space:nowrap; }
+    .filters-open-summary {
+      min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      font-size:12px; font-weight:800; color:var(--text-sec); text-align:right;
+    }
+    .filters-backdrop {
+      display:none; position:fixed; inset:0; z-index:58; background:rgba(0,0,0,.28);
+      backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+    }
+    .filters-backdrop.active { display:block; }
+    .filters {
+      display:none; flex-direction:column; gap:10px;
+      position:fixed; left:50%; top:86px; transform:translateX(-50%);
+      width:min(820px, calc(100vw - 28px)); max-height:calc(100dvh - 106px); overflow-y:auto;
+      background:var(--header-bg); border:1px solid var(--header-border); padding:12px 18px;
+      flex-shrink:0; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+      border-radius:var(--radius); box-shadow:var(--shadow-lg); z-index:70;
+      overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+    }
+    .filters.open { display:flex; }
+    .filters-head {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding-bottom:10px; border-bottom:1px solid var(--border);
+    }
+    .filters-title { font-size:15px; font-weight:900; letter-spacing:-.2px; color:var(--text); }
+    .filters-subtitle { margin-top:3px; font-size:11px; font-weight:700; color:var(--text-hint); }
+    .filters-close-btn {
+      min-height:34px; padding:7px 12px; border-radius:999px; border:1.5px solid var(--border);
+      background:var(--surface-2); color:var(--text-sec); font-family:inherit; font-size:12px; font-weight:900;
+      cursor:pointer; white-space:nowrap;
+    }
+    .filters-close-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .search-wrap { position:relative; }
+    .search-wrap input {
+      width:100%; padding:11px 14px 11px 42px; border-radius:var(--radius-sm); border:1.5px solid var(--border);
+      font-size:14px; font-family:inherit; background:var(--surface-2); color:var(--text); outline:none;
+      transition:border-color var(--transition), background var(--transition), box-shadow .2s;
+    }
+    .search-wrap input:focus { border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 3px var(--accent-dim); }
+    .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-hint); pointer-events:none; }
+    .search-icon svg { width:17px; height:17px; }
+
+    .status-tabs {
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+      padding-top:2px;
+    }
+    .status-tab {
+      padding:8px 13px; border-radius:999px; border:1.5px solid var(--border); background:var(--surface-2);
+      color:var(--text-sec); font-family:inherit; font-size:12px; font-weight:800; cursor:pointer;
+      display:inline-flex; align-items:center; gap:6px; transition:all var(--transition);
+    }
+    .status-tab:hover { border-color:var(--accent); color:var(--accent); }
+    .status-tab.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+    .status-tab.on-hold.active { background:var(--warning-dim); border-color:var(--warning); color:var(--warning); }
+    .status-count { font-size:11px; min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--border); color:var(--text-sec); }
+    .settings-group { padding:10px 4px 14px; border-bottom:1px solid var(--border); margin-bottom:10px; }
+    .settings-title { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--text-hint); margin:4px 0 10px; }
+    .settings-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; }
+    .settings-row label { font-size:13px; color:var(--text-sec); font-weight:800; }
+    .settings-select {
+      width:126px; padding:8px 10px; border-radius:12px; border:1.5px solid var(--border); background:var(--surface-2);
+      color:var(--text); font-family:inherit; font-size:12px; font-weight:800; outline:none;
+    }
+    .pagination-panel {
+      display:none; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap;
+      padding:5px 8px; margin:0 0 2px; flex-shrink:0; min-height:38px;
+      border:1px solid var(--border); border-radius:16px; background:var(--header-bg);
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); box-shadow:var(--shadow-sm);
+      position:relative; z-index:18;
+    }
+    .pagination-panel.active { display:flex; }
+    .page-info { font-size:11px; color:var(--text-sec); font-weight:800; padding:0 8px; white-space:nowrap; }
+    .page-btn {
+      min-width:30px; height:30px; padding:0 8px; border-radius:10px; border:1px solid var(--border);
+      background:var(--surface-2); color:var(--text-sec); font-family:inherit; font-size:12px; font-weight:800;
+      cursor:pointer; transition:all var(--transition);
+    }
+    .page-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .page-btn.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+    .page-btn:disabled { opacity:.42; cursor:default; border-color:var(--border); color:var(--text-hint); }
+    .page-ellipsis { min-width:22px; text-align:center; color:var(--text-hint); font-weight:800; font-size:12px; }
+
+    .sort-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .sort-lbl { font-size:12px; color:var(--text-hint); flex-shrink:0; font-weight:600; }
+    .sort-btn, .adv-toggle-btn {
+      padding:7px 12px; border-radius:999px; border:1.5px solid var(--border); background:var(--surface-2);
+      font-size:12px; font-family:inherit; color:var(--text-sec); cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+      white-space:nowrap; transition:all var(--transition); font-weight:800;
+    }
+    .sort-btn:hover, .adv-toggle-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .sort-btn.active, .adv-toggle-btn.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+    .advanced-panel { display:none; border:1px solid var(--border); background:var(--surface); border-radius:18px; padding:12px; box-shadow:var(--shadow); }
+    .advanced-panel.open { display:block; }
+    .advanced-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px; }
+    .adv-field { display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .adv-field-label { font-size:12px; color:var(--text-hint); font-weight:700; }
+    .adv-select {
+      width:100%; padding:10px 12px; border-radius:14px; border:1.5px solid var(--border); font-size:13px;
+      font-family:inherit; background:var(--surface-2); color:var(--text); outline:none;
+    }
+    .advanced-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+    .list-scroll { flex:1; overflow-y:auto; padding:0 0 8px; min-height:0; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    .cards-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+    .zno-card {
+      background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; border:1px solid var(--border);
+      cursor:pointer; transition:transform .15s, box-shadow .2s, border-color .2s; backdrop-filter:blur(8px);
+    }
+    .zno-card:hover { box-shadow:var(--shadow-lg); border-color:rgba(37,99,235,.15); }
+    .zno-card:active { transform:scale(.995); }
+    .card-top { display:flex; align-items:flex-start; gap:12px; padding:16px 16px 12px; }
+    .card-checkbox { width:22px; height:22px; margin-top:2px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; border-radius:6px; }
+    .card-main { flex:1; min-width:0; }
+    .card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; }
+    .card-title { font-weight:800; font-size:15px; color:var(--text); letter-spacing:-.2px; line-height:1.3; overflow-wrap:anywhere; }
+    .card-subtitle { font-size:12px; color:var(--accent); font-weight:800; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .badge { font-size:11px; font-weight:800; padding:4px 10px; border-radius:999px; flex-shrink:0; letter-spacing:.2px; white-space:nowrap; }
+    .badge-hold { background:var(--warning-dim); color:var(--warning); }
+    .badge-normal { background:var(--surface-2); color:var(--text-hint); }
+    .card-row { font-size:13px; color:var(--text-sec); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .card-row b { color:var(--text); font-weight:700; }
+    .card-amount { font-size:18px; font-weight:800; color:var(--text); margin-top:9px; letter-spacing:-.4px; }
+    .card-amount .currency { font-size:12px; color:var(--text-hint); font-weight:700; }
+    .card-amount-label {
+      margin-top:11px; font-size:10px; font-weight:900; color:var(--text-hint);
+      text-transform:uppercase; letter-spacing:.7px;
+    }
+    .card-amount.usd-primary {
+      margin-top:2px; font-size:24px; font-weight:900; letter-spacing:-.7px; line-height:1.12;
+    }
+    .card-amount.usd-primary .currency {
+      font-size:13px; font-weight:800; color:var(--text-sec);
+    }
+    .card-secondary-amount {
+      margin-top:6px; display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+      font-size:12px; color:var(--text-sec); font-weight:800;
+    }
+    .card-secondary-amount b {
+      color:var(--text); font-size:14px; font-weight:800; white-space:nowrap;
+    }
+    .card-country-row {
+      font-size:12px; color:var(--text-sec); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .card-country-row b { color:var(--text); font-weight:700; }
+    .card-meta { display:flex; align-items:center; gap:10px; margin-top:7px; flex-wrap:wrap; }
+    .meta-tag { font-size:12px; color:var(--text-hint); display:flex; align-items:center; gap:4px; font-weight:700; }
+    .meta-tag.attach-icon { color:var(--text-hint); }
+    .meta-tag.overdue { color:var(--danger); background:var(--danger-dim); border-radius:999px; padding:3px 8px; font-weight:800; }
+    .meta-tag.on-hold { color:var(--warning); background:var(--warning-dim); border-radius:999px; padding:3px 8px; font-weight:800; }
+    .card-divider { height:1px; background:var(--border); margin:0 16px; }
+    .card-actions { display:flex; }
+    .card-action-btn {
+      flex:1; padding:8px 8px; border:none; background:none; font-family:inherit; font-size:12px; font-weight:800; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; min-height:38px; transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .card-action-btn + .card-action-btn { border-left:1px solid var(--border); }
+    .card-action-btn.approve { color:var(--success); }
+    .card-action-btn.approve:hover { background:var(--success-dim); }
+    .card-action-btn.reject { color:var(--danger); }
+    .card-action-btn.reject:hover { background:var(--danger-dim); }
+    .card-action-btn.hold { color:var(--warning); }
+    .card-action-btn.hold:hover { background:var(--warning-dim); }
+    .bulk-panel {
+      background:var(--header-bg); border-top:1px solid var(--header-border); padding:10px 14px; padding-bottom:max(10px, env(safe-area-inset-bottom)); display:flex; align-items:center;
+      justify-content:space-between; gap:8px; flex-wrap:wrap; flex-shrink:0; min-height:58px; position:relative; bottom:auto;
+      backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:0 -1px 0 var(--header-border); z-index:22;
+    }
+    .bulk-count { font-size:14px; color:var(--text-sec); font-weight:700; }
+    .bulk-count b { color:var(--text); font-weight:800; }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 22px; border-radius:var(--radius-sm); border:none;
+      font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; min-height:46px; transition:all var(--transition);
+      text-decoration:none; letter-spacing:-.2px;
+    }
+    .btn-primary { background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.3); }
+    .btn-primary:hover { background:var(--accent-dark); }
+    .btn-primary:disabled { background:var(--border); color:var(--text-hint); cursor:default; box-shadow:none; }
+    .btn-danger { background:var(--danger); color:#fff; }
+    .btn-warning { background:var(--warning); color:#fff; }
+    .btn-outline-danger { background:var(--danger-dim); border:1.5px solid var(--danger); color:var(--danger); }
+    .btn-outline-warning { background:var(--warning-dim); border:1.5px solid var(--warning); color:var(--warning); }
+    .btn-ghost { background:var(--surface-2); border:1.5px solid var(--border); color:var(--text-sec); }
+    .btn-compact { min-height:38px; padding:8px 12px; font-size:12px; border-radius:14px; letter-spacing:0; }
+    .detail-body { flex:1; overflow-y:auto; padding:16px 18px; }
+    .detail-section { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); margin-bottom:14px; overflow:hidden; backdrop-filter:blur(8px); }
+    .detail-section-title { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--text-hint); padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+    .detail-field { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
+    .detail-field:last-child { border-bottom:none; }
+    .detail-field.vertical { flex-direction:column; gap:0; }
+    .detail-label { font-size:13px; color:var(--text-sec); flex-shrink:0; font-weight:700; }
+    .detail-value { font-size:13px; font-weight:800; text-align:right; word-break:break-word; overflow-wrap:anywhere; max-width:70%; }
+    .detail-value.text-long { max-width:100%; text-align:left; line-height:1.45; width:100%; margin-top:8px; }
+    .detail-field.amount-field { align-items:center; }
+    .detail-field.amount-field .detail-label { max-width:48%; }
+    .detail-amount-big {
+      padding:16px 0 16px 16px; font-size:28px; font-weight:800; letter-spacing:-.5px;
+      text-align:right; line-height:1.12; word-break:normal; overflow-wrap:normal;
+    }
+    .detail-amount-big .currency-code { font-size:14px; color:var(--text-sec); font-weight:700; }
+    .hold-box { padding:14px 16px; background:var(--warning-dim); color:var(--warning); font-size:13px; font-weight:800; line-height:1.45; border-bottom:1px solid var(--border); }
+    .detail-footer { background:var(--header-bg); border-top:1px solid var(--header-border); padding:10px 14px; display:flex; gap:8px; flex-shrink:0; backdrop-filter:blur(16px); }
+    .detail-footer .btn { flex:1; }
+    .file-item { display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background var(--transition); }
+    .file-item:last-child { border-bottom:none; }
+    .file-item:hover { background:var(--surface-2); }
+    .file-icon { width:42px; height:42px; border-radius:var(--radius-sm); background:var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .file-info { flex:1; min-width:0; }
+    .file-name { font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .file-meta { font-size:12px; color:var(--text-hint); margin-top:3px; font-weight:700; }
+    .file-action { font-size:16px; color:var(--text-hint); flex-shrink:0; }
+    .overlay { display:none; position:fixed; inset:0; background:var(--overlay); z-index:200; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+    .overlay.active { display:block; }
+    .menu-panel {
+      position:fixed; top:0; right:0; width:280px; height:100%; background:var(--surface); z-index:201; transform:translateX(100%);
+      transition:transform .28s cubic-bezier(.4,0,.2,1); border-left:1px solid var(--border); display:flex; flex-direction:column; box-shadow:-4px 0 24px rgba(0,0,0,.08);
+    }
+    .menu-panel.active { transform:translateX(0); }
+    .menu-header { padding:28px 22px 22px; border-bottom:1px solid var(--border); }
+    .m-logo { width:44px; height:44px; background:linear-gradient(135deg, var(--accent) 0%, #7C3AED 100%); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:14px; }
+    .m-title { font-size:16px; font-weight:800; letter-spacing:-.3px; }
+    .m-user { font-size:13px; color:var(--text-sec); margin-top:4px; font-weight:700; }
+    .menu-items { padding:12px; flex:1; }
+    .menu-item { display:flex; align-items:center; gap:14px; padding:14px 16px; font-size:14px; font-weight:800; cursor:pointer; border-radius:var(--radius-sm); color:var(--text-sec); }
+    .menu-item.active, .menu-item:hover { background:var(--accent-dim); color:var(--accent); }
+    .menu-footer { padding:18px 12px; border-top:1px solid var(--border); }
+    .theme-toggle { position:relative; width:50px; height:28px; background:var(--surface-2); border:1.5px solid var(--border); border-radius:14px; cursor:pointer; flex-shrink:0; }
+    .theme-toggle-thumb { position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--accent); box-shadow:0 2px 6px rgba(37,99,235,.3); transition:transform var(--transition); display:flex; align-items:center; justify-content:center; font-size:11px; }
+    [data-theme="dark"] .theme-toggle-thumb { transform:translateX(22px); }
+    .modal-overlay { display:none; position:fixed; inset:0; background:var(--overlay); z-index:300; align-items:flex-end; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+    .modal-overlay.active { display:flex; }
+    .modal-sheet { background:var(--surface); border-radius:var(--radius-lg) var(--radius-lg) 0 0; padding:10px 22px 36px; width:100%; max-height:72vh; overflow-y:auto; border-top:1px solid var(--border); box-shadow:0 -4px 24px rgba(0,0,0,.08); }
+    .modal-handle { width:40px; height:5px; border-radius:3px; background:var(--border); margin:14px auto 22px; }
+    .modal-sheet h3 { font-size:18px; font-weight:800; margin-bottom:8px; letter-spacing:-.3px; }
+    .modal-sheet p { font-size:14px; color:var(--text-sec); margin-bottom:18px; font-weight:700; }
+    .modal-sheet textarea { width:100%; padding:12px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--border); font-size:14px; font-family:inherit; resize:none; height:100px; outline:none; color:var(--text); background:var(--surface-2); }
+    .modal-sheet textarea.error { border-color:var(--danger); box-shadow:0 0 0 3px var(--danger-dim); }
+    .modal-actions { display:flex; gap:12px; margin-top:16px; }
+    .modal-actions .btn { flex:1; }
+    #fileModal { align-items:center; padding:18px; z-index:400; }
+    .file-modal-sheet { background:var(--surface); border-radius:var(--radius); width:100%; max-width:680px; max-height:88vh; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); border:1px solid var(--border); overflow:hidden; }
+    .file-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); flex-shrink:0; gap:12px; }
+    .file-modal-title { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .file-modal-close { width:36px; height:36px; border:none; background:var(--surface-2); border-radius:var(--radius-sm); cursor:pointer; font-size:14px; color:var(--text-sec); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .file-modal-body { flex:1; overflow:auto; background:var(--surface-2); min-height:200px; display:flex; align-items:center; justify-content:center; }
+    .file-modal-body iframe { width:100%; height:60vh; border:none; }
+    .file-modal-body img { max-width:100%; max-height:60vh; object-fit:contain; display:block; margin:auto; }
+    .file-modal-body pre { width:100%; padding:18px; font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-all; color:var(--text); background:var(--surface); margin:0; align-self:flex-start; }
+    .file-modal-footer { display:flex; gap:12px; padding:14px 18px; border-top:1px solid var(--border); flex-shrink:0; }
+    .file-modal-footer .btn { flex:1; }
+    .no-preview { text-align:center; padding:40px 28px; color:var(--text-sec); }
+    .no-preview .np-icon { font-size:48px; margin-bottom:14px; }
+    #toastContainer { position:fixed; bottom:84px; left:50%; transform:translateX(-50%); z-index:500; display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:none; }
+    .toast { padding:12px 24px; border-radius:999px; font-size:14px; font-weight:800; color:#fff; box-shadow:0 4px 24px rgba(0,0,0,.2); animation:toastIn .25s ease, toastOut .3s ease 2.7s forwards; white-space:nowrap; letter-spacing:-.2px; }
+    .toast-success { background:var(--success); } .toast-error { background:var(--danger); } .toast-info { background:var(--accent); } .toast-warning { background:var(--warning); }
+    @keyframes toastIn { from { opacity:0; transform:translateY(14px) scale(.96); } to { opacity:1; transform:none; } }
+    @keyframes toastOut { to { opacity:0; transform:translateY(14px) scale(.96); } }
+
+    .busy-overlay {
+      display:none; position:fixed; inset:0; z-index:450; align-items:center; justify-content:center; padding:22px;
+      background:rgba(0,0,0,.28); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    }
+    .busy-overlay.active { display:flex; }
+    .busy-card {
+      width:min(430px, 100%); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow-lg); padding:22px; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+      animation:busyCardIn .22s ease-out;
+    }
+    @keyframes busyCardIn { from { opacity:0; transform:translateY(12px) scale(.98); } to { opacity:1; transform:none; } }
+    .busy-main { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+    .busy-spinner {
+      width:42px; height:42px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent);
+      animation:busySpin .85s linear infinite; flex-shrink:0;
+    }
+    @keyframes busySpin { to { transform:rotate(360deg); } }
+    .busy-title { font-size:16px; font-weight:800; letter-spacing:-.25px; color:var(--text); }
+    .busy-message { font-size:13px; font-weight:700; color:var(--text-sec); margin-top:4px; line-height:1.35; }
+    .busy-progress { height:6px; border-radius:999px; overflow:hidden; background:var(--surface-2); border:1px solid var(--border); margin:12px 0 14px; }
+    .busy-progress-fill {
+      height:100%; width:18%; border-radius:999px; background:var(--accent);
+      transition:width .35s cubic-bezier(.4,0,.2,1); position:relative;
+    }
+    .busy-progress-fill::after {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+      animation:busyProgressSheen 1.25s linear infinite;
+    }
+    @keyframes busyProgressSheen { from { transform:translateX(-100%); } to { transform:translateX(100%); } }
+    .busy-steps { display:flex; flex-direction:column; gap:8px; }
+    .busy-step { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:800; color:var(--text-hint); }
+    .busy-step-dot {
+      width:9px; height:9px; border-radius:50%; background:var(--border); flex-shrink:0;
+      transition:background var(--transition), transform var(--transition), box-shadow var(--transition);
+    }
+    .busy-step.active { color:var(--accent); }
+    .busy-step.active .busy-step-dot { background:var(--accent); transform:scale(1.25); box-shadow:0 0 0 5px var(--accent-dim); }
+    .busy-step.done { color:var(--success); }
+    .busy-step.done .busy-step-dot { background:var(--success); }
+    .busy-step.done .busy-step-dot::after { content:'✓'; display:block; color:#fff; font-size:7px; line-height:9px; text-align:center; }
+
+    .skeleton { background:linear-gradient(90deg,var(--skeleton-1) 25%,var(--skeleton-2) 50%,var(--skeleton-1) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
+    @keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+    .skel-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); padding:18px; margin-bottom:12px; box-shadow:var(--shadow-sm); }
+    .skel-line { height:14px; margin-bottom:10px; }
+    .empty-state { text-align:center; padding:56px 28px; color:var(--text-sec); }
+    .empty-state .es-icon { font-size:52px; margin-bottom:16px; }
+    .empty-state h3 { font-size:17px; font-weight:800; color:var(--text); margin-bottom:8px; letter-spacing:-.3px; }
+    .empty-state p { font-size:14px; font-weight:700; }
+    @media (max-width:860px) {
+      .detail-field.amount-field {
+        flex-direction:column; align-items:stretch; gap:6px;
+      }
+      .detail-field.amount-field .detail-label {
+        max-width:none; width:100%;
+      }
+      .detail-field.amount-field .detail-amount-big {
+        width:100%; padding:4px 0 2px; text-align:left; font-size:27px; line-height:1.16;
+      }
+      .detail-field.amount-field .currency-code {
+        display:inline-block; margin-left:4px;
+      }
+
+      .filters {
+        left:8px; right:8px; bottom:max(8px, env(safe-area-inset-bottom)); top:auto; transform:none;
+        width:auto; max-height:min(76svh, calc(100svh - 84px)); border-radius:22px 22px 18px 18px;
+        padding:12px;
+      }
+      .filters-open-btn { min-height:42px; border-radius:16px; }
+      .filters-open-main { font-size:13px; }
+      .filters-open-summary { font-size:11px; }
+      .filters-head { position:sticky; top:-12px; z-index:2; background:var(--header-bg); padding-top:2px; }
+      .screen-shell { width:calc(100% - 16px); margin-top:8px; gap:10px; min-height:0; }
+      .advanced-grid { grid-template-columns:1fr; }
+      .pagination-panel {
+        justify-content:flex-start;
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        overflow-y:hidden;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+        padding:5px 6px;
+        border-radius:14px;
+        min-height:36px;
+      }
+      .pagination-panel::-webkit-scrollbar { display:none; }
+      .page-btn { min-width:32px; height:30px; flex:0 0 auto; }
+      .page-info { display:none; }
+      .bulk-panel { padding:8px 10px; padding-bottom:max(10px, env(safe-area-inset-bottom)); gap:8px; }
+      .bulk-panel .btn, .detail-footer .btn { flex:1 1 calc(50% - 6px); }
+      .bulk-count { width:100%; }
+      .detail-body { padding:16px 8px; }
+      .detail-value { max-width:64%; }
+      .card-action-btn { font-size:11px; padding-left:5px; padding-right:5px; }
+      .card-amount.usd-primary { font-size:23px; }
+      .card-secondary-amount {
+        align-items:flex-start; flex-direction:column; gap:2px;
+      }
+      .card-secondary-amount b { font-size:13px; }
+    }
+
+
+    /* PWA auth gate: credentials are kept only in JS memory. */
+    .auth-gate {
+      position:fixed; inset:0; z-index:1000000;
+      display:flex; align-items:center; justify-content:center;
+      padding:24px max(18px, env(safe-area-inset-left));
+      background:var(--bg); background-image:var(--bg-pattern);
+    }
+    .auth-gate, .auth-gate.hidden { display:none !important; }
+    .auth-card {
+      width:min(420px,100%); padding:24px;
+      background:var(--surface); border:1px solid var(--border); border-radius:24px;
+      box-shadow:var(--shadow-lg); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    }
+    .auth-title { font-size:22px; font-weight:800; letter-spacing:-.4px; margin-bottom:6px; }
+    .auth-subtitle { font-size:13px; line-height:1.45; color:var(--text-sec); margin-bottom:18px; }
+    .auth-field { margin-top:12px; }
+    .auth-field label { display:block; margin-bottom:6px; font-size:12px; font-weight:800; color:var(--text-sec); }
+    .auth-field input {
+      width:100%; min-height:48px; padding:0 13px;
+      border:1px solid var(--border); border-radius:13px;
+      background:var(--surface-2); color:var(--text); font:inherit; font-size:16px;
+      outline:none;
+    }
+    .auth-field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+    .auth-submit { width:100%; min-height:48px; margin-top:18px; }
+    .auth-message { min-height:20px; margin-top:12px; font-size:12px; line-height:1.4; color:var(--text-sec); }
+    .auth-message.error { color:var(--danger); font-weight:700; }
+    .auth-note { margin-top:14px; font-size:11px; line-height:1.45; color:var(--text-hint); }
+    body.auth-locked { overflow:hidden; }
+
+  </style>
+</head>
+<body>
+
+<div id="adGate" class="ad-gate">
+  <main class="ad-login">
+    <h1>Log in</h1>
+    <div class="ad-subtitle">Enter your username and password</div>
+    <form id="adLoginForm" autocomplete="on">
+      <div class="ad-field">
+        <label for="adUsername">Username <span class="ad-required">*</span></label>
+        <input id="adUsername" name="username" type="text" placeholder="domain\name.surname" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      </div>
+      <div class="ad-field">
+        <label for="adPassword">Password <span class="ad-required">*</span></label>
+        <div class="ad-password">
+          <input id="adPassword" name="password" type="password" autocomplete="current-password" required>
+          <button class="ad-eye" id="adTogglePassword" type="button" aria-label="Show password">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <label class="ad-remember">
+        <input id="adRememberUsername" type="checkbox">
+        <span>Remember username</span>
+      </label>
+      <button class="ad-btn ad-btn-primary" id="adLoginBtn" type="submit">Log in</button>
+    </form>
+    <div class="ad-divider">OR</div>
+    <button class="ad-btn ad-btn-sso" id="adSsoBtn" type="button">SSO Login</button>
+    <div id="adStatus" class="ad-status"></div>
+    <div class="ad-note">AD password is never stored in localStorage, sessionStorage, IndexedDB or cookies.<br>Only the username may be remembered when the checkbox is enabled.</div>
+  </main>
+</div>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ic-arrow-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="ic-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+  <symbol id="ic-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+</svg>
+
+<div id="screenList" class="screen active">
+  <header class="app-header">
+    <span class="header-title">Согласование ЗНО</span>
+    <button class="icon-btn" id="refreshBtn" onclick="manualRefresh()" title="Refresh"><span class="refresh-symbol">↻</span></button>
+    <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle theme"><svg><use href="#ic-moon"/></svg></button>
+    <button class="icon-btn" onclick="openMenu()"><svg><use href="#ic-more"/></svg></button>
+  </header>
+
+  <div class="screen-shell">
+    <div class="filters-dock">
+      <button class="filters-open-btn" type="button" onclick="toggleFiltersPanel()">
+        <span class="filters-open-main">Filters and sort</span>
+        <span class="filters-open-summary" id="filtersSummary">To approve · Estimated Payment Date ↑</span>
+      </button>
+    </div>
+
+    <div class="filters-backdrop" id="filtersBackdrop" onclick="closeFiltersPanel()"></div>
+
+    <div class="filters" id="filtersPanel">
+      <div class="filters-head">
+        <div>
+          <div class="filters-title">Filters and sort</div>
+          <div class="filters-subtitle" id="filtersSubtitle">Search, status, sorting and advanced filters</div>
+        </div>
+        <button class="filters-close-btn" type="button" onclick="closeFiltersPanel()">Done</button>
+      </div>
+
+      <div class="search-wrap">
+        <span class="search-icon"><svg><use href="#ic-search"/></svg></span>
+        <input type="search" id="filterSearch" placeholder="Description, internal number, organization, counterparty, trader…" />
+      </div>
+
+      <div class="sort-bar">
+        <span class="sort-lbl">Sort by:</span>
+        <button class="sort-btn active" id="sortBtnPaymentDate" onclick="setSort('estimatedPaymentDate')">Estimated Payment Date <span id="sortArrowPaymentDate">↑</span></button>
+        <button class="sort-btn" id="sortBtnAmount" onclick="setSort('amount')">USD Amount <span id="sortArrowAmount">↓</span></button>
+        <button class="sort-btn" id="sortBtnCostType" onclick="setSort('costType')">Cost Type <span id="sortArrowCostType">↑</span></button>
+      </div>
+
+      <div class="status-tabs" id="statusTabs">
+        <button class="status-tab active" id="tabActive" type="button" onclick="setListTab('active')">To approve <span class="status-count" id="tabCountActive">0</span></button>
+        <button class="status-tab on-hold" id="tabOnHold" type="button" onclick="setListTab('onHold')">On hold <span class="status-count" id="tabCountOnHold">0</span></button>
+        <button class="status-tab" id="tabAll" type="button" onclick="setListTab('all')">All <span class="status-count" id="tabCountAll">0</span></button>
+      </div>
+
+      <div><button class="adv-toggle-btn" id="advancedSearchBtn" type="button" onclick="toggleAdvancedSearch()">Advanced filters</button></div>
+      <div class="advanced-panel" id="advancedSearchPanel">
+        <div class="advanced-grid" id="advancedFilterFields"></div>
+        <div class="advanced-actions">
+          <button class="btn btn-ghost btn-compact" type="button" onclick="resetFilters()">Reset filters</button>
+          <button class="btn btn-primary btn-compact" type="button" onclick="closeFiltersPanel()">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="list-scroll" id="znoList"></div>
+    <div class="pagination-panel" id="paginationPanel"></div>
+  </div>
+
+  <div class="bulk-panel">
+    <span class="bulk-count">Selected: <b id="bulkCount">0</b></span>
+    <button class="btn btn-ghost btn-compact" id="selectAllBtn" onclick="toggleSelectAll()">Select all visible</button>
+    <button class="btn btn-danger btn-compact" id="bulkRejectBtn" disabled onclick="openBulkRejectModal()">Reject selected</button>
+    <button class="btn btn-primary btn-compact" id="bulkApproveBtn" disabled onclick="bulkApprove()">Approve selected</button>
+  </div>
+</div>
+
+<div id="screenDetail" class="screen">
+  <header class="app-header">
+    <button class="icon-btn" onclick="goBack()"><svg><use href="#ic-arrow-left"/></svg></button>
+    <span class="header-title" id="detailTitle">Payment request</span>
+  </header>
+  <div class="detail-body" id="detailBody"></div>
+  <div class="detail-footer">
+    <button class="btn btn-primary btn-compact" id="detailApproveBtn" onclick="approveDetail()">Approve</button>
+    <button class="btn btn-outline-danger btn-compact" onclick="openRejectModal()">Reject</button>
+    <button class="btn btn-outline-warning btn-compact" id="detailHoldBtn" onclick="toggleHoldFromDetail()">On hold</button>
+  </div>
+</div>
+
+<div class="overlay" id="menuOverlay" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-header">
+    <div class="m-logo">📋</div>
+    <div class="m-title">Mobile approval</div>
+    <div class="m-user" id="menuUserName">Payment requests</div>
+    <button class="btn btn-ghost btn-compact" type="button" onclick="adLogout()" style="margin-top:10px">Выйти</button>
+  </div>
+  <div class="menu-items">
+    <div class="menu-item active" id="menuItemList" onclick="menuGoto('screenList')">
+      <span class="mi-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-list"/></svg></span>
+      Payment requests
+    </div>
+  </div>
+  <div class="menu-footer">
+
+    <div class="settings-group">
+      <div class="settings-title">View settings</div>
+      <div class="settings-row">
+        <label for="viewModeSelect">View mode</label>
+        <select class="settings-select" id="viewModeSelect" onchange="setViewMode(this.value)">
+          <option value="scroll">Scroll</option>
+          <option value="pages">Pages</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <label for="pageSizeSelect">Cards per page</label>
+        <select class="settings-select" id="pageSizeSelect" onchange="setPageSize(this.value)">
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <label for="autoRefreshSelect">Auto update</label>
+        <select class="settings-select" id="autoRefreshSelect" onchange="setAutoRefreshInterval(this.value)">
+          <option value="0">Off</option>
+          <option value="1">1 min</option>
+          <option value="2">2 min</option>
+          <option value="3">3 min</option>
+          <option value="5">5 min</option>
+          <option value="10">10 min</option>
+          <option value="15">15 min</option>
+          <option value="20">20 min</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-title">PWA badge test</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-compact" type="button" onclick="enableNotifications()">Enable notifications</button>
+        <button class="btn btn-primary btn-compact" type="button" onclick="setTestBadge(5)">Badge 5</button>
+        <button class="btn btn-ghost btn-compact" type="button" onclick="clearTestBadge()">Clear badge</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 4px">
+      <span style="font-size:13px;color:var(--text-sec);font-weight:700">Dark theme</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><div class="theme-toggle-thumb" id="menuThumbIcon">☀️</div></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="commentModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 id="commentModalTitle">Action</h3>
+    <p id="commentModalText">Please provide a comment.</p>
+    <textarea id="actionComment" placeholder="Comment…"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeCommentModal()">Cancel</button>
+      <button class="btn btn-danger" id="commentConfirmBtn" onclick="confirmCommentAction()"><span id="commentConfirmText">Confirm</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fileModal">
+  <div class="file-modal-sheet">
+    <div class="file-modal-header">
+      <span class="file-modal-title" id="fileModalTitle">File</span>
+      <button class="file-modal-close" onclick="closeFileModal()">✕</button>
+    </div>
+    <div class="file-modal-body" id="fileModalBody"></div>
+    <div class="file-modal-footer">
+      <a class="btn btn-primary" id="fileDownloadBtn" target="_blank" rel="noopener"><svg><use href="#ic-download"/></svg> Download</a>
+      <button class="btn btn-ghost" onclick="closeFileModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="busy-overlay" id="busyOverlay" aria-live="polite" aria-busy="true">
+  <div class="busy-card">
+    <div class="busy-main">
+      <div class="busy-spinner"></div>
+      <div>
+        <div class="busy-title" id="busyTitle">Processing…</div>
+        <div class="busy-message" id="busyMessage">Please wait…</div>
+      </div>
+    </div>
+    <div class="busy-progress"><div class="busy-progress-fill" id="busyProgressFill"></div></div>
+    <div class="busy-steps" id="busySteps"></div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="./ad-gate.js"></script>
+<script>
+'use strict';
+
+var BASE = '/auth/zno';
+var API = {
+  znoList:function(){return BASE + '/api/tasks';},
+  files:function(id){return BASE + '/api/files/' + encodeURIComponent(id);},
+  fileContent:function(id){return BASE + '/api/files/content/' + encodeURIComponent(id);},
+  approve:function(){return BASE + '/api/approve';},
+  reject:function(){return BASE + '/api/reject';},
+  hold:function(){return BASE + '/api/hold';},
+  unhold:function(){return BASE + '/api/unhold';},
+  bulkApprove:function(){return BASE + '/api/approve/bulk';},
+  bulkReject:function(){return BASE + '/api/reject/bulk';}
+};
+
+
+var AUTH_HEADER = '';
+var AUTH_IN_PROGRESS = false;
+
+function encodeBasicUtf8(value){
+  var bytes=new TextEncoder().encode(value), binary='';
+  for(var i=0;i<bytes.length;i++) binary+=String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function setAuthMessage(message,isError){
+  var el=document.getElementById('authMessage');
+  if(!el) return;
+  el.textContent=message||'';
+  el.className='auth-message'+(isError?' error':'');
+}
+
+function showAuthGate(message){
+  window.SESSION_READY = false;
+  AUTH_HEADER='';
+  if(typeof showAdGate==='function') showAdGate();
+  if(message && typeof setAdStatus==='function') setAdStatus(message,'error');
+}
+
+function hideAuthGate(){
+  var gate=document.getElementById('authGate');
+  if(gate) gate.classList.add('hidden');
+  document.body.classList.remove('auth-locked');
+  setAuthMessage('',false);
+}
+
+function authFetch(url,options){
+  if(!window.SESSION_READY){
+    showAuthGate('Please sign in.');
+    return Promise.reject(new Error('AUTH_REQUIRED'));
+  }
+
+  options=options||{};
+  var headers=new Headers(options.headers||{});
+  if(headers.has('Authorization')) headers.delete('Authorization');
+  options.headers=headers;
+  options.credentials='include';
+  if(!options.cache) options.cache='no-store';
+
+  return window.fetch(url,options).then(function(response){
+    if(response.status===401){
+      showAuthGate('Session expired. Please sign in again.');
+      throw new Error('AUTH_REQUIRED');
+    }
+    if(response.status===403){
+      return response.text().then(function(text){
+        var message='You are signed in, but this service did not authorize the account.';
+        try{
+          var data=text?JSON.parse(text):{};
+          if(data&&data.error) message=data.error;
+        }catch(e){}
+        var err=new Error(message);
+        err.code='SERVICE_NOT_AUTHORIZED';
+        throw err;
+      });
+    }
+    return response;
+  });
+}
+
+function openZnoApplication(){
+  window.SESSION_READY = true;
+  hideAuthGate();
+  if(typeof hideAdGate==='function') hideAdGate();
+  authFetch(API.znoList(),{method:'GET',headers:{'Accept':'application/json'}})
+    .then(function(r){
+      return r.text().then(function(text){return parseTasksResponse(text,r.ok,r.status);});
+    })
+    .then(function(tasks){
+      state.selectedIds=[];
+      applyLoadedTasks(tasks,{manual:false,compareNew:false,keepSelection:false});
+      showInitialCountToast();
+    })
+    .catch(function(err){
+      if(err && err.message==='AUTH_REQUIRED') return;
+      showToast((err && err.message) ? err.message : 'Could not load payment requests.','error');
+    });
+}
+
+function initAuthGate(){
+  var login=document.getElementById('authLogin');
+  if(login) login.value=localStorage.getItem('zno-auth-login')||'';
+  var password=document.getElementById('authPassword');
+  if(password){
+    password.addEventListener('keydown',function(e){
+      if(e.key==='Enter') loginAndOpenUI();
+    });
+  }
+  showAuthGate('');
+}
+
+function loginAndOpenUI(){
+  if(AUTH_IN_PROGRESS) return;
+
+  var loginEl=document.getElementById('authLogin');
+  var passwordEl=document.getElementById('authPassword');
+  var button=document.getElementById('authLoginBtn');
+  var login=loginEl?loginEl.value.trim():'';
+  var password=passwordEl?passwordEl.value:'';
+
+  if(!login || !password){
+    setAuthMessage('Enter your username and password.',true);
+    return;
+  }
+
+  AUTH_IN_PROGRESS=true;
+  AUTH_HEADER='Basic '+encodeBasicUtf8(login+':'+password);
+  if(button){button.disabled=true;button.textContent='Signing in…';}
+  setAuthMessage('Connecting to 1C…',false);
+
+  authFetch(API.znoList(),{method:'GET',headers:{'Accept':'application/json'}})
+    .then(function(r){
+      return r.text().then(function(text){return parseTasksResponse(text,r.ok,r.status);});
+    })
+    .then(function(tasks){
+      localStorage.setItem('zno-auth-login',login);
+      state.selectedIds=[];
+      applyLoadedTasks(tasks,{manual:false,compareNew:false,keepSelection:false});
+      hideAuthGate();
+      showInitialCountToast();
+    })
+    .catch(function(err){
+      if(err && err.message==='AUTH_REQUIRED') return;
+      AUTH_HEADER='';
+      setAuthMessage(err && err.message?err.message:'Sign-in failed.',true);
+    })
+    .then(function(){
+      AUTH_IN_PROGRESS=false;
+      if(button){button.disabled=false;button.textContent='Sign in';}
+    });
+}
+
+var CURRENCY_MAP = {'840':'USD','643':'RUB','978':'EUR','826':'GBP','156':'CNY','392':'JPY','784':'AED'};
+function resolveCurrency(raw){ if(!raw) return ''; var s=String(raw).trim(); return CURRENCY_MAP[s] || s; }
+function pickField(obj, keys, fallback){ for(var i=0;i<keys.length;i++){ var k=keys[i]; if(obj && obj[k]!==undefined && obj[k]!==null && String(obj[k]).trim()!=='') return obj[k]; } return fallback; }
+
+function getTaskId(z){
+  return String(pickField(z,[
+    'UID',
+    'uid',
+    'Uid',
+    'ID',
+    'Id',
+    'id',
+    'ДокументUID',
+    'DocumentUID'
+  ],'') || '').trim();
+}
+function getDescription(z){return pickField(z,['Description','ккDescription','PaymentDescription'],'');}
+function getCardTitle(z){
+  return getInternalNumber(z) || getInvoiceNumber(z) || pickField(z,['Presentation'],'') || '—';
+}
+function getDetailDescription(z){
+  return getDescription(z);
+}
+function getInternalNumber(z){return pickField(z,['InternalNumber'],'');}
+function getInvoiceNumber(z){return pickField(z,['InvoiceNumber','InternalNumber'],'');}
+function getInvoiceDate(z){return pickField(z,['InvoiceDate'],'');}
+function getOrganization(z){return pickField(z,['Organization','Company','Организация'],'');}
+function getCounterparty(z){return pickField(z,['Counterparty','Vendor','Контрагент'],'');}
+function getBeneficiary(z){return pickField(z,['Beneficiary','ккПолучательДенежныхСредств','PaymentRecipient','ПолучательДенежныхСредств'],'');}
+function getTrader(z){return pickField(z,['Trader','ккТрейдер','Трейдер'],'');}
+function getCurrentStage(z){return pickField(z,['CurrentStage','Stage','ТекущийЭтап','CurrentApprovalStage'],'');}
+function getInvoiceComment(z){return pickField(z,['InvoiceComment','Комментарий','Comment'],'');}
+function getPaymentAmountInInvoiceCurrency(z){return pickField(z,['PaymentAmountInInvoiceCurrency','Amount','Сумма'],0);}
+function getPaymentAmountInPaymentCurrency(z){return pickField(z,['PaymentAmountInPaymentCurrency','PaymentAmount','Amount','Сумма'],0);}
+function getPaymentAmountUSD(z){return pickField(z,['PaymentAmountUSD','ккСуммаПлатежаUSD','PaymentAmountInUSD','AmountUSD'],null);}
+function getCounterpartyBankCountry(z){return pickField(z,['CounterpartyBankCountry','CounterpartyBankCountryName','СтранаБанкаКонтрагента'],'');}
+function getBeneficiaryBankCountry(z){return pickField(z,['BeneficiaryBankCountry','BeneficiaryBankCountryName','СтранаБанкаПолучателя'],'');}
+function getCounterpartyCountry(z){return pickField(z,['CounterpartyCountry','CounterpartyRegistrationCountry','СтранаРегистрацииКонтрагента'],'');}
+function getInvoiceCurrency(z){return resolveCurrency(pickField(z,['InvoiceCurrency','AccountingCurrency','Валюта'],''));}
+function getPaymentCurrency(z){return resolveCurrency(pickField(z,['PaymentCurrency','ВалютаОплаты','ВалютаПлатежа'],'')) || getInvoiceCurrency(z);}
+function currenciesEqual(a,b){return String(a||'').trim().toUpperCase()===String(b||'').trim().toUpperCase();}
+function getUsdEquivalentAmount(z){
+  if(currenciesEqual(getInvoiceCurrency(z),'USD')){
+    return getPaymentAmountInInvoiceCurrency(z);
+  }
+
+  if(isPaymentCurrencyUSD(z)){
+    return getPaymentAmountInPaymentCurrency(z);
+  }
+
+  return getPaymentAmountUSD(z);
+}
+
+function isPaymentCurrencyUSD(z){return currenciesEqual(getPaymentCurrency(z),'USD');}
+function shouldShowInvoiceCurrency(z){var invoice=getInvoiceCurrency(z), payment=getPaymentCurrency(z); return Boolean(invoice) && !currenciesEqual(invoice,payment);}
+function shouldShowPaymentCurrency(z){return Boolean(getPaymentCurrency(z));}
+function shouldShowPaymentAmountUSD(z){
+  var payment=getPaymentCurrency(z);
+  var amountUsd=getPaymentAmountUSD(z);
+  return Boolean(payment) && !currenciesEqual(payment,'USD') && parseMoneyNumber(amountUsd)!==null;
+}
+
+function renderCounterpartyBalanceRow(z,cls){
+  var balance=getCounterpartyBalance(z);
+  if(parseMoneyNumber(balance)===null) return '';
+  cls=cls||'card-row';
+  return '<div class="'+cls+'"><b>Counterparty Balance:</b> '+esc(fmtMoney(balance)+' USD')+'</div>';
+}
+
+function renderResponsibleListRow(z){
+  var responsible=getResponsibleChain(z);
+  if(!responsible) return '';
+  return '<div class="card-row"><b>Responsible:</b> '+esc(responsible)+'</div>';
+}
+function getEstimatedPaymentDate(z){return pickField(z,['EstimatedPaymentDate','PaymentDate','ДатаПлатежа'],'');}
+function getCostType(z){return pickField(z,['CostType','OPS','Номенклатура'],'');}
+function getProduct(z){return pickField(z,['Product','Item','Продукт'],'');}
+function getVessels(z){var v=pickField(z,['Vessels','Vessel','Судно'],''); if(String(v).toLowerCase()==='other') return ''; return v;}
+function getInitiator(z){return pickField(z,['Initiator','Инициатор','Ответственный'],'');}
+function getResponsibleChain(z){return pickField(z,['Responsible','ResponsibleChain','ApprovalResponsible','RESPONSIBLE','Согласованты','ЦепочкаСогласования'],'');}
+function getCounterpartyBalance(z){return pickField(z,['CounterpartyBalance','Balance','ккBalance','БалансКонтрагента'],'');}
+function getCounterpartyBalanceUpdateTime(z){return pickField(z,['CounterpartyBalanceUpdateTime','BalanceUpdateTime','ккBalanceUpdateTime','ДатаБалансаКонтрагента'],'');}
+function getOnHold(z){var v=pickField(z,['OnHold','ккOnHold'],false); return v===true || v==='true' || v==='Истина' || v===1 || v==='1';}
+function hasAttachments(z){var v=pickField(z,['HasAttachments','ЕстьВложения'],false); return v===true || v==='true' || v==='Истина' || v===1 || v==='1';}
+function getFileId(f){return pickField(f,['FileUID','ФайлUID','FileId','ФайлID','ID','Id','Идентификатор'],'');}
+function getFileName(f){return pickField(f,['FileName','name','ИмяФайла'],'');}
+function getFileExt(f){return String(pickField(f,['Extension','ext','Ext','Расширение'],'')||'').toLowerCase();}
+function getFileSize(f){return pickField(f,['Size','size','Размер'],0);}
+function getFileUrl(f){return pickField(f,['url','URL'],'');}
+
+var PREVIEW_IMAGE=['jpg','jpeg','png','gif','webp','svg'];
+var PREVIEW_PDF=['pdf'];
+var PREVIEW_TEXT=['txt','csv','log','xml','json'];
+function getFileType(ext){var e=(ext||'').toLowerCase(); if(PREVIEW_IMAGE.indexOf(e)!==-1) return 'image'; if(PREVIEW_PDF.indexOf(e)!==-1) return 'pdf'; if(PREVIEW_TEXT.indexOf(e)!==-1) return 'text'; return 'other';}
+
+var state={currentZnoId:null,searchQuery:'',selectedIds:[],prevScreen:'screenList',allTasks:[],sortField:'estimatedPaymentDate',sortDir:'asc',commentMode:'reject-single',commentIds:[],advancedFilters:{},listTab:'active',viewMode:'pages',pageSize:20,currentPage:1,autoRefreshMinutes:0,autoRefreshTimer:null,lastLoadAt:0,isLoading:false,isSilentRefreshing:false,isActionInProgress:false};
+
+window.addEventListener('load',function(){initTheme();initViewSettings();initSearch();initAdvancedSearch();startAdGate();});
+
+function initTheme(){applyTheme(localStorage.getItem('zno-theme')||'light');}
+function toggleTheme(){applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');}
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme',theme); localStorage.setItem('zno-theme',theme);
+  var isDark=theme==='dark'; var btn=document.getElementById('themeToggleBtn');
+  if(btn) btn.innerHTML=isDark?'<svg><use href="#ic-sun"/></svg>':'<svg><use href="#ic-moon"/></svg>';
+  var thumb=document.getElementById('menuThumbIcon'); if(thumb) thumb.textContent=isDark?'🌙':'☀️';
+}
+
+function initViewSettings(){
+  state.viewMode=localStorage.getItem('zno-view-mode')||'pages';
+  state.pageSize=Number(localStorage.getItem('zno-page-size')||20);
+  state.autoRefreshMinutes=Number(localStorage.getItem('zno-auto-refresh-minutes')||0);
+  if([10,20,30,50].indexOf(state.pageSize)===-1) state.pageSize=20;
+  if([0,1,2,3,5,10,15,20].indexOf(state.autoRefreshMinutes)===-1) state.autoRefreshMinutes=0;
+  if(['scroll','pages'].indexOf(state.viewMode)===-1) state.viewMode='scroll';
+
+  var viewModeSelect=document.getElementById('viewModeSelect');
+  var pageSizeSelect=document.getElementById('pageSizeSelect');
+  var autoRefreshSelect=document.getElementById('autoRefreshSelect');
+  if(viewModeSelect) viewModeSelect.value=state.viewMode;
+  if(pageSizeSelect) pageSizeSelect.value=String(state.pageSize);
+  if(autoRefreshSelect) autoRefreshSelect.value=String(state.autoRefreshMinutes);
+
+  resetAutoRefreshTimer();
+}
+function setViewMode(value){
+  state.viewMode=(value==='pages')?'pages':'scroll';
+  localStorage.setItem('zno-view-mode',state.viewMode);
+  state.currentPage=1;
+  renderZnoList(applySort(applyFilters(state.allTasks)));
+}
+function setPageSize(value){
+  var n=Number(value)||20;
+  if([10,20,30,50].indexOf(n)===-1) n=20;
+  state.pageSize=n;
+  localStorage.setItem('zno-page-size',String(n));
+  state.currentPage=1;
+  renderZnoList(applySort(applyFilters(state.allTasks)));
+}
+
+function setAutoRefreshInterval(value){
+  var n=Number(value)||0;
+  if([0,1,2,3,5,10,15,20].indexOf(n)===-1) n=0;
+  state.autoRefreshMinutes=n;
+  localStorage.setItem('zno-auto-refresh-minutes',String(n));
+  resetAutoRefreshTimer();
+  showToast(n ? ('Auto update: every '+n+' min') : 'Auto update disabled','info');
+}
+
+function resetAutoRefreshTimer(){
+  if(state.autoRefreshTimer){
+    clearInterval(state.autoRefreshTimer);
+    state.autoRefreshTimer=null;
+  }
+  if(state.autoRefreshMinutes>0){
+    state.autoRefreshTimer=setInterval(function(){silentRefreshZnoList('timer');},state.autoRefreshMinutes*60*1000);
+  }
+}
+
+function setRefreshButtonState(active){
+  var btn=document.getElementById('refreshBtn');
+  if(btn) btn.classList.toggle('refreshing',Boolean(active));
+}
+
+function manualRefresh(){
+  loadZnoList(true,{manual:true});
+}
+
+function taskIdMap(tasks){
+  var map={};
+  (tasks||[]).forEach(function(t){
+    var id=getTaskId(t);
+    if(id) map[id]=true;
+  });
+  return map;
+}
+
+function countNewTasks(oldTasks,newTasks){
+  var oldMap=taskIdMap(oldTasks);
+  var count=0;
+  (newTasks||[]).forEach(function(t){
+    var id=getTaskId(t);
+    if(id && !oldMap[id]) count++;
+  });
+  return count;
+}
+
+function parseTasksResponse(text,statusOk,status){
+  var data={};
+  try{data=text?JSON.parse(text):{};}catch(e){throw new Error('Server returned non-JSON response');}
+  if(!statusOk) throw new Error(data&&data.error?data.error:'HTTP '+status);
+  if(data&&data.ok===false) throw new Error(data.error||'Server returned error');
+  return Array.isArray(data)?data:(data&&Array.isArray(data.items)?data.items:(data&&Array.isArray(data.tasks)?data.tasks:[]));
+}
+
+function applyLoadedTasks(tasks,options){
+  options=options||{};
+  var oldTasks=state.allTasks||[];
+  var newCount=options.compareNew?countNewTasks(oldTasks,tasks):0;
+
+  state.allTasks=Array.isArray(tasks)?tasks:[];
+  state.lastLoadAt=Date.now();
+  syncBadgeWithZnoCount();
+
+  if(state.allTasks.length>100 && state.viewMode==='scroll'){
+    state.viewMode='pages';
+    localStorage.setItem('zno-view-mode','pages');
+    var viewModeSelect=document.getElementById('viewModeSelect');
+    if(viewModeSelect) viewModeSelect.value='pages';
+    if(!options.silent) showToast('Page mode enabled because more than 100 payment requests were loaded','info');
+  }
+
+  renderAdvancedFilterOptions(state.allTasks);
+  updateStatusTabs();
+
+  if(options.keepSelection){
+    var existing=taskIdMap(state.allTasks);
+    state.selectedIds=state.selectedIds.filter(function(id){return existing[id];});
+  }else{
+    state.selectedIds=[];
+  }
+
+  renderZnoList(applySort(applyFilters(state.allTasks)));
+
+  if(newCount>0){
+    showToast('You have '+newCount+' new payment request'+(newCount===1?'':'s'),'info');
+  }else if(options.manual){
+    showToast('Payment requests updated','success');
+  }
+}
+
+function silentRefreshZnoList(reason){
+  if(!window.SESSION_READY) return;
+  if(state.isLoading || state.isSilentRefreshing || state.isActionInProgress) return;
+  state.isSilentRefreshing=true;
+  setRefreshButtonState(true);
+
+  authFetch(API.znoList(),{})
+    .then(function(r){return r.text().then(function(text){return parseTasksResponse(text,r.ok,r.status);});})
+    .then(function(tasks){
+      applyLoadedTasks(tasks,{silent:true,compareNew:true,keepSelection:true});
+    })
+    .catch(function(err){
+      if(reason==='visible') showToast(err.message||'Auto update failed','error');
+      else console.warn('Auto update failed:',err);
+    })
+    .then(function(){
+      state.isSilentRefreshing=false;
+      setRefreshButtonState(false);
+    });
+}
+
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'){
+    var staleMs=60*1000;
+    if(!state.lastLoadAt || Date.now()-state.lastLoadAt>staleMs){
+      silentRefreshZnoList('visible');
+    }
+  }
+});
+
+function switchScreen(name){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); document.getElementById(name).classList.add('active');}
+function goBack(){switchScreen(state.prevScreen||'screenList');}
+function menuGoto(){closeMenu();switchScreen('screenList');}
+function openMenu(){document.getElementById('menuOverlay').classList.add('active');document.getElementById('menuPanel').classList.add('active');}
+function closeMenu(){document.getElementById('menuOverlay').classList.remove('active');document.getElementById('menuPanel').classList.remove('active');}
+
+
+function openFiltersPanel(){
+  var panel=document.getElementById('filtersPanel');
+  var backdrop=document.getElementById('filtersBackdrop');
+  if(panel) panel.classList.add('open');
+  if(backdrop) backdrop.classList.add('active');
+  document.body.classList.add('filters-open');
+}
+
+function closeFiltersPanel(){
+  var panel=document.getElementById('filtersPanel');
+  var backdrop=document.getElementById('filtersBackdrop');
+  if(panel) panel.classList.remove('open');
+  if(backdrop) backdrop.classList.remove('active');
+  document.body.classList.remove('filters-open');
+}
+
+function toggleFiltersPanel(){
+  var panel=document.getElementById('filtersPanel');
+  if(panel && panel.classList.contains('open')) closeFiltersPanel();
+  else openFiltersPanel();
+}
+
+function currentTabLabel(){
+  if(state.listTab==='onHold') return 'On hold';
+  if(state.listTab==='all') return 'All';
+  return 'To approve';
+}
+
+function currentSortLabel(){
+  var label='Estimated Payment Date';
+  if(state.sortField==='amount') label='USD Amount';
+  else if(state.sortField==='costType') label='Cost Type';
+  return label+' '+(state.sortDir==='asc'?'↑':'↓');
+}
+
+function lastUpdatedLabel(){
+  if(!state.lastLoadAt) return '';
+  var d=new Date(state.lastLoadAt);
+  if(isNaN(d.getTime())) return '';
+  var hh=String(d.getHours()).padStart(2,'0');
+  var mm=String(d.getMinutes()).padStart(2,'0');
+  return 'Updated '+hh+':'+mm;
+}
+
+function activeExtraFilterCount(){
+  var count=0;
+  if(String(state.searchQuery||'').trim()) count++;
+  var filters=state.advancedFilters||{};
+  Object.keys(filters).forEach(function(k){ if(String(filters[k]||'').trim()) count++; });
+  return count;
+}
+
+function updateFiltersSummary(){
+  var summary=document.getElementById('filtersSummary');
+  var subtitle=document.getElementById('filtersSubtitle');
+  var cnt=activeExtraFilterCount();
+  var updated=lastUpdatedLabel();
+  var text=currentTabLabel()+' · '+currentSortLabel()+(updated?' · '+updated:'')+(cnt?' · '+cnt+' filter'+(cnt===1?'':'s'):'');
+  if(summary) summary.textContent=text;
+  if(subtitle) subtitle.textContent=cnt ? (cnt+' active filter'+(cnt===1?'':'s')) : 'Search, status, sorting and advanced filters';
+}
+
+var searchTimer;
+function initSearch(){
+  document.getElementById('filterSearch').addEventListener('input',function(e){
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(function(){state.searchQuery=e.target.value.trim();state.selectedIds=[];state.currentPage=1;updateBulkPanel();renderZnoList(applySort(applyFilters(state.allTasks)));updateFiltersSummary();},250);
+  });
+}
+
+var ADVANCED_FILTERS=[
+  {key:'trader',label:'Trader',getter:getTrader},
+  {key:'currentStage',label:'Current Stage',getter:getCurrentStage},
+  {key:'organization',label:'Organization',getter:getOrganization},
+  {key:'counterparty',label:'Counterparty',getter:getCounterparty},
+  {key:'counterpartyBankCountry',label:'Counterparty’s Bank Country',getter:getCounterpartyBankCountry},
+  {key:'costType',label:'Cost Type',getter:getCostType},
+  {key:'invoiceCurrency',label:'Invoice Currency',getter:getInvoiceCurrency},
+  {key:'paymentCurrency',label:'Payment Currency',getter:getPaymentCurrency},
+  {key:'onHold',label:'On hold',getter:function(z){return getOnHold(z)?'Yes':'No';}}
+];
+
+function initAdvancedSearch(){renderAdvancedFilterOptions(state.allTasks||[]);}
+function toggleAdvancedSearch(){var p=document.getElementById('advancedSearchPanel');var b=document.getElementById('advancedSearchBtn');var o=p.classList.toggle('open');b.classList.toggle('active',o);}
+function renderAdvancedFilterOptions(tasks){
+  var host=document.getElementById('advancedFilterFields'); if(!host) return;
+  host.innerHTML=ADVANCED_FILTERS.map(function(def){
+    var values=uniqueFilterValues(tasks,function(t){return def.getter(t);});
+    var options=['<option value="">All</option>'].concat(values.map(function(v){var s=state.advancedFilters[def.key]===v?' selected':'';return '<option value="'+esc(v)+'"'+s+'>'+esc(v)+'</option>';})).join('');
+    return '<label class="adv-field"><span class="adv-field-label">'+esc(def.label)+'</span><select class="adv-select" data-filter-key="'+esc(def.key)+'">'+options+'</select></label>';
+  }).join('');
+  host.querySelectorAll('.adv-select').forEach(function(sel){sel.addEventListener('change',function(){state.advancedFilters[this.getAttribute('data-filter-key')]=this.value||'';state.selectedIds=[];state.currentPage=1;updateBulkPanel();renderZnoList(applySort(applyFilters(state.allTasks)));updateFiltersSummary();});});
+}
+function uniqueFilterValues(tasks,getter){var seen={},arr=[];(tasks||[]).forEach(function(t){var v=String(getter(t)||'').trim();if(!v)return;var id=v.toLowerCase();if(seen[id])return;seen[id]=true;arr.push(v);});arr.sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});});return arr;}
+
+
+function setListTab(tab){
+  state.listTab=tab||'active';
+  state.currentPage=1;
+  state.selectedIds=[];
+  updateBulkPanel();
+  updateStatusTabs();
+  renderZnoList(applySort(applyFilters(state.allTasks)));
+}
+function updateStatusTabs(){
+  var all=(state.allTasks||[]).length;
+  var onHold=(state.allTasks||[]).filter(getOnHold).length;
+  var active=all-onHold;
+
+  var tabActive=document.getElementById('tabActive');
+  var tabOnHold=document.getElementById('tabOnHold');
+  var tabAll=document.getElementById('tabAll');
+  if(tabActive) tabActive.classList.toggle('active',state.listTab==='active');
+  if(tabOnHold) tabOnHold.classList.toggle('active',state.listTab==='onHold');
+  if(tabAll) tabAll.classList.toggle('active',state.listTab==='all');
+
+  var countActive=document.getElementById('tabCountActive');
+  var countOnHold=document.getElementById('tabCountOnHold');
+  var countAll=document.getElementById('tabCountAll');
+  if(countActive) countActive.textContent=active;
+  if(countOnHold) countOnHold.textContent=onHold;
+  if(countAll) countAll.textContent=all;
+  updateFiltersSummary();
+}
+
+function setSort(field){if(state.sortField===field) state.sortDir=state.sortDir==='asc'?'desc':'asc'; else {state.sortField=field;state.sortDir=field==='amount'?'desc':'asc';} state.currentPage=1; updateSortBtns(); renderZnoList(applySort(applyFilters(state.allTasks)));}
+function updateSortBtns(){
+  var p=state.sortField==='estimatedPaymentDate', a=state.sortField==='amount', c=state.sortField==='costType', arrow=state.sortDir==='asc'?'↑':'↓';
+  document.getElementById('sortBtnPaymentDate').classList.toggle('active',p); document.getElementById('sortBtnAmount').classList.toggle('active',a); document.getElementById('sortBtnCostType').classList.toggle('active',c);
+  document.getElementById('sortArrowPaymentDate').textContent=p?arrow:'↑'; document.getElementById('sortArrowAmount').textContent=a?arrow:'↓'; document.getElementById('sortArrowCostType').textContent=c?arrow:'↑';
+  updateFiltersSummary();
+}
+function applySort(tasks){
+  var arr=tasks.slice();
+  arr.sort(function(x,y){
+    var vx,vy;
+    if(state.sortField==='amount'){vx=parseMoneyNumber(getUsdEquivalentAmount(x))||0;vy=parseMoneyNumber(getUsdEquivalentAmount(y))||0;return state.sortDir==='asc'?vx-vy:vy-vx;}
+    if(state.sortField==='costType'){vx=String(getCostType(x)||'');vy=String(getCostType(y)||'');return state.sortDir==='asc'?vx.localeCompare(vy,undefined,{numeric:true,sensitivity:'base'}):vy.localeCompare(vx,undefined,{numeric:true,sensitivity:'base'});}
+    vx=(parseDate(getEstimatedPaymentDate(x))||new Date(0)).getTime(); vy=(parseDate(getEstimatedPaymentDate(y))||new Date(0)).getTime(); return state.sortDir==='asc'?vx-vy:vy-vx;
+  });
+  return arr;
+}
+function parseDate(s){if(!s||typeof s!=='string')return null;s=s.trim();var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m){var d=new Date(+m[1],+m[2]-1,+m[3]);return isNaN(d.getTime())?null:d;}var p=s.split('.');if(p.length===3){var d2=new Date(+p[2],+p[1]-1,+p[0]);return isNaN(d2.getTime())?null:d2;}return null;}
+function isOverduePayment(z){var d=parseDate(getEstimatedPaymentDate(z));if(!d)return false;var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());return d.getTime()<today.getTime();}
+function applyFilters(tasks){
+  var search=String(state.searchQuery||'').toLowerCase();
+  return tasks.filter(function(z){
+    if(state.listTab==='active' && getOnHold(z)) return false;
+    if(state.listTab==='onHold' && !getOnHold(z)) return false;
+
+    if(search){
+      var hay=[getDescription(z),getInternalNumber(z),getInvoiceNumber(z),getOrganization(z),getCounterparty(z),getBeneficiary(z),getCounterpartyBankCountry(z),getBeneficiaryBankCountry(z),getCounterpartyCountry(z),getTrader(z),getCurrentStage(z),getInvoiceComment(z),getCostType(z),getProduct(z),getInvoiceCurrency(z),getPaymentCurrency(z),getEstimatedPaymentDate(z),getInitiator(z),getResponsibleChain(z),getCounterpartyBalance(z)].join(' ').toLowerCase();
+      if(hay.indexOf(search)===-1) return false;
+    }
+    for(var i=0;i<ADVANCED_FILTERS.length;i++){
+      var def=ADVANCED_FILTERS[i], selected=state.advancedFilters[def.key];
+      if(!selected) continue;
+      if(String(def.getter(z)).trim()!==selected) return false;
+    }
+    return true;
+  });
+}
+function resetFilters(){state.searchQuery='';state.advancedFilters={};state.selectedIds=[];state.currentPage=1;document.getElementById('filterSearch').value='';updateBulkPanel();renderAdvancedFilterOptions(state.allTasks);renderZnoList(applySort(applyFilters(state.allTasks)));updateFiltersSummary();}
+
+
+var busyState={timer:null,messages:[],index:0};
+
+function showBusy(title,messages){
+  var overlay=document.getElementById('busyOverlay');
+  if(!overlay) return;
+
+  if(busyState.timer){
+    clearInterval(busyState.timer);
+    busyState.timer=null;
+  }
+
+  busyState.messages=(messages&&messages.length)?messages:[title||'Processing…'];
+  busyState.index=0;
+
+  document.getElementById('busyTitle').textContent=title||'Processing…';
+  renderBusyState();
+
+  overlay.classList.add('active');
+
+  busyState.timer=setInterval(function(){
+    if(busyState.index<busyState.messages.length-1){
+      busyState.index++;
+      renderBusyState();
+    }
+  },1200);
+}
+
+function updateBusy(message){
+  if(!message) return;
+  if(busyState.messages.indexOf(message)===-1){
+    busyState.messages.push(message);
+  }
+  busyState.index=busyState.messages.indexOf(message);
+  renderBusyState();
+}
+
+function renderBusyState(){
+  var message=busyState.messages[busyState.index]||'Please wait…';
+  var messageEl=document.getElementById('busyMessage');
+  var stepsEl=document.getElementById('busySteps');
+  var progressEl=document.getElementById('busyProgressFill');
+
+  if(messageEl) messageEl.textContent=message;
+
+  if(stepsEl){
+    stepsEl.innerHTML=busyState.messages.map(function(step,i){
+      var cls=i<busyState.index?' done':(i===busyState.index?' active':'');
+      return '<div class="busy-step'+cls+'"><span class="busy-step-dot"></span><span>'+esc(step)+'</span></div>';
+    }).join('');
+  }
+
+  if(progressEl){
+    var total=Math.max(busyState.messages.length,1);
+    var width=Math.round(((busyState.index+1)/total)*100);
+    progressEl.style.width=Math.max(width,18)+'%';
+  }
+}
+
+function hideBusy(){
+  var overlay=document.getElementById('busyOverlay');
+  if(busyState.timer){
+    clearInterval(busyState.timer);
+    busyState.timer=null;
+  }
+  state.isActionInProgress=false;
+  if(overlay) overlay.classList.remove('active');
+}
+
+function busyMessages(kind,count){
+  if(kind==='load'){
+    return [
+      'Connecting to 1C:Document Management',
+      'Loading payment requests',
+      'Preparing the approval list'
+    ];
+  }
+
+  if(kind==='approve'){
+    return [
+      'Checking the current task in 1C:Document Management',
+      'Sending approval',
+      'Updating the payment request list'
+    ];
+  }
+
+  if(kind==='reject'){
+    return [
+      'Checking the current task in 1C:Document Management',
+      'Sending rejection reason',
+      'Updating the payment request list'
+    ];
+  }
+
+  if(kind==='hold'){
+    return [
+      'Checking payment request availability',
+      'Saving On hold reason',
+      'Updating the payment request card'
+    ];
+  }
+
+  if(kind==='unhold'){
+    return [
+      'Checking payment request availability',
+      'Removing On hold flag',
+      'Updating the payment request card'
+    ];
+  }
+
+  if(kind==='bulkApprove'){
+    return [
+      'Preparing '+count+' selected payment request'+(count===1?'':'s'),
+      'Sending approvals to 1C:Document Management',
+      'Updating the payment request list'
+    ];
+  }
+
+  if(kind==='bulkReject'){
+    return [
+      'Preparing '+count+' selected payment request'+(count===1?'':'s'),
+      'Sending rejection reason to 1C:Document Management',
+      'Updating the payment request list'
+    ];
+  }
+
+  return ['Processing request','Waiting for server response','Updating data'];
+}
+
+
+function loadZnoList(forceReload,options){
+  options=options||{};
+  if(!forceReload && state.allTasks.length>0){renderZnoList(applySort(applyFilters(state.allTasks)));return;}
+
+  var c=document.getElementById('znoList');
+  c.innerHTML=renderSkeletons(4);
+  state.selectedIds=[];
+  updateBulkPanel();
+
+  state.isLoading=true;
+  setRefreshButtonState(true);
+  showBusy(options.manual?'Refreshing payment requests':'Loading payment requests',busyMessages('load'));
+
+  authFetch(API.znoList(),{})
+    .then(function(r){return r.text().then(function(text){return parseTasksResponse(text,r.ok,r.status);});})
+    .then(function(tasks){
+      updateBusy('Preparing the approval list');
+      applyLoadedTasks(tasks,{manual:Boolean(options.manual),compareNew:false,keepSelection:false});
+      hideBusy();
+      showInitialCountToast();
+    })
+    .catch(function(err){
+      hideBusy();
+      if(err && err.message==='AUTH_REQUIRED') return;
+      c.innerHTML='<div class="empty-state"><div class="es-icon">⚠️</div><h3>Loading error</h3><p>'+esc(err.message)+'</p><button class="btn btn-primary" style="margin-top:16px" onclick="loadZnoList(true)">↻ Retry</button></div>';
+    })
+    .then(function(){
+      state.isLoading=false;
+      setRefreshButtonState(false);
+    });
+}
+function showInitialCountToast(){var n=state.allTasks.length;if(!sessionStorage.getItem('zno-count-toast-shown')){showToast(n+' payment request'+(n===1?'':'s')+' waiting for your approval','info');sessionStorage.setItem('zno-count-toast-shown','1');}}
+
+function renderZnoList(items){
+  updateStatusTabs();
+  var c=document.getElementById('znoList');
+  var pagination=document.getElementById('paginationPanel');
+  if(!items.length){
+    if(pagination) pagination.innerHTML='';
+    if(pagination) pagination.classList.remove('active');
+    var has=state.allTasks.length>0;
+    c.innerHTML='<div class="empty-state"><div class="es-icon">'+(has?'🔍':'📭')+'</div><h3>'+(has?'No matches':'No payment requests')+'</h3><p>'+(has?'No payment requests found for the selected filters.':'There are no payment requests waiting for approval.')+'</p>'+(has?'<button class="btn btn-ghost" style="margin-top:12px" onclick="resetFilters()">Reset filters</button>':'')+'</div>';
+    return;
+  }
+
+  var total=items.length;
+  var visibleItems=items;
+
+  if(state.viewMode==='pages'){
+    var totalPages=Math.max(1,Math.ceil(total/state.pageSize));
+    if(state.currentPage>totalPages) state.currentPage=totalPages;
+    if(state.currentPage<1) state.currentPage=1;
+    var from=(state.currentPage-1)*state.pageSize;
+    visibleItems=items.slice(from,from+state.pageSize);
+  } else {
+    state.currentPage=1;
+  }
+
+  c.innerHTML='<div class="cards-grid">'+visibleItems.map(renderZnoCard).join('')+'</div>';
+  c.querySelectorAll('.zno-card').forEach(function(card){
+    var id=String(card.dataset.id||'').trim();
+    card.querySelector('.card-checkbox').addEventListener('change',function(e){e.stopPropagation(); if(!id){e.target.checked=false;showToast('Cannot select: payment request UID is empty','error');return;} if(e.target.checked){if(state.selectedIds.indexOf(id)===-1)state.selectedIds.push(id);}else{state.selectedIds=state.selectedIds.filter(function(x){return x!==id;});} updateBulkPanel();});
+    card.querySelector('.card-action-btn.approve').addEventListener('click',function(e){e.stopPropagation();quickApprove(id,card);});
+    card.querySelector('.card-action-btn.reject').addEventListener('click',function(e){e.stopPropagation();openRejectModalForId(id);});
+    card.querySelector('.card-action-btn.hold').addEventListener('click',function(e){
+      e.stopPropagation();
+      var task=findTaskById(id);
+      if(task && getOnHold(task)) unholdSingle(id);
+      else openHoldModalForId(id);
+    });
+    card.addEventListener('click',function(){openZnoDetail(id);});
+  });
+  renderPagination(total);
+  updateCheckboxesFromSelection();
+  updateBulkPanel();
+}
+function renderPagination(total){
+  var panel=document.getElementById('paginationPanel');
+  if(!panel) return;
+  if(state.viewMode!=='pages'){
+    panel.classList.remove('active');
+    panel.innerHTML='';
+    return;
+  }
+
+  var totalPages=Math.max(1,Math.ceil(total/state.pageSize));
+  var pages=buildPageList(state.currentPage,totalPages);
+  var html=[];
+
+  html.push('<button class="page-btn" title="First page" onclick="setPage(1)" '+(state.currentPage<=1?'disabled':'')+'>«</button>');
+  html.push('<button class="page-btn" title="Previous page" onclick="changePage(-1)" '+(state.currentPage<=1?'disabled':'')+'>‹</button>');
+
+  pages.forEach(function(p){
+    if(p==='...'){
+      html.push('<span class="page-ellipsis">…</span>');
+    }else{
+      html.push('<button class="page-btn'+(p===state.currentPage?' active':'')+'" onclick="setPage('+p+')">'+p+'</button>');
+    }
+  });
+
+  html.push('<button class="page-btn" title="Next page" onclick="changePage(1)" '+(state.currentPage>=totalPages?'disabled':'')+'>›</button>');
+  html.push('<button class="page-btn" title="Last page" onclick="setPage('+totalPages+')" '+(state.currentPage>=totalPages?'disabled':'')+'>»</button>');
+  html.push('<span class="page-info">'+total+' items · '+state.pageSize+' per page</span>');
+
+  panel.classList.add('active');
+  panel.innerHTML=html.join('');
+}
+function buildPageList(current,total){
+  if(total<=7){
+    var all=[];
+    for(var i=1;i<=total;i++) all.push(i);
+    return all;
+  }
+
+  var pages=[1];
+  var start=Math.max(2,current-1);
+  var end=Math.min(total-1,current+1);
+
+  if(current<=3){
+    start=2;
+    end=4;
+  }else if(current>=total-2){
+    start=total-3;
+    end=total-1;
+  }
+
+  if(start>2) pages.push('...');
+  for(var p=start;p<=end;p++) pages.push(p);
+  if(end<total-1) pages.push('...');
+  pages.push(total);
+  return pages;
+}
+function setPage(page){
+  var items=applySort(applyFilters(state.allTasks));
+  var totalPages=Math.max(1,Math.ceil(items.length/state.pageSize));
+  state.currentPage=Math.min(totalPages,Math.max(1,Number(page)||1));
+  renderZnoList(items);
+  var list=document.getElementById('znoList');
+  if(list) list.scrollTo({top:0,behavior:'smooth'});
+}
+function changePage(delta){
+  setPage(state.currentPage+(Number(delta)||0));
+}
+function renderZnoCard(z){
+  var id=getTaskId(z), onHold=getOnHold(z), overdue=isOverduePayment(z);
+  var badge=onHold?'<span class="badge badge-hold">On hold</span>':'<span class="badge badge-normal">Under approval</span>';
+  var attach=hasAttachments(z)?'<span class="meta-tag attach-icon">📎 attachments</span>':'';
+  var beneficiaryBankCountry=getBeneficiaryBankCountry(z);
+  var beneficiaryBankCountryRow=beneficiaryBankCountry?'<div class="card-country-row"><b>Beneficiary’s Bank Country:</b> '+esc(beneficiaryBankCountry)+'</div>':'';
+  var paymentCurrency=getPaymentCurrency(z);
+  var paymentAmount=getPaymentAmountInPaymentCurrency(z);
+  var isUsd=isPaymentCurrencyUSD(z);
+
+  var amountRows;
+  if(isUsd){
+    amountRows=
+      '<div class="card-amount-label">Payment Amount</div>'+
+      '<div class="card-amount usd-primary">'+fmtMoney(paymentAmount)+' <span class="currency">USD</span></div>'+
+      renderCounterpartyBalanceRow(z)+
+      renderResponsibleListRow(z);
+  }else{
+    amountRows=
+      '<div class="card-row"><b>Payment Amount in Payment Currency:</b> '+esc(fmtMoney(paymentAmount)+' '+displayValue(paymentCurrency))+'</div>'+
+      '<div class="card-amount-label">USD-equivalent</div>'+
+      '<div class="card-amount usd-primary">'+fmtMoney(getUsdEquivalentAmount(z))+' <span class="currency">USD</span></div>'+
+      renderCounterpartyBalanceRow(z)+
+      renderResponsibleListRow(z);
+  }
+
+  return '<div class="zno-card" data-id="'+esc(id)+'"><div class="card-top"><input type="checkbox" class="card-checkbox" onclick="event.stopPropagation()" /><div class="card-main">'+
+    '<div class="card-header"><div style="min-width:0;flex:1"><div class="card-title">'+esc(getCardTitle(z))+'</div></div>'+badge+'</div>'+
+    '<div class="card-row card-row-wrap"><b>Description:</b> '+esc(displayValue(getDescription(z)))+'</div>'+
+    '<div class="card-row"><b>Organization:</b> '+esc(displayValue(getOrganization(z)))+'</div>'+
+    '<div class="card-row"><b>Counterparty:</b> '+esc(displayValue(getCounterparty(z)))+'</div>'+
+    '<div class="card-country-row"><b>Counterparty’s Bank Country:</b> '+esc(displayValue(getCounterpartyBankCountry(z)))+'</div>'+
+    beneficiaryBankCountryRow+
+    '<div class="card-row"><b>Cost Type:</b> '+esc(displayValue(getCostType(z)))+'</div>'+
+    amountRows+
+    '<div class="card-meta"><span class="meta-tag'+(overdue?' overdue':'')+'">'+(overdue?'⚠':'📅')+' Estimated Payment Date: '+esc(displayValue(getEstimatedPaymentDate(z)))+'</span>'+(onHold?'<span class="meta-tag on-hold">⏸ On hold</span>':'')+attach+'</div>'+
+    '</div></div><div class="card-divider"></div><div class="card-actions"><button class="card-action-btn approve">Approve</button><button class="card-action-btn reject">Reject</button><button class="card-action-btn hold">'+(onHold?'Remove hold':'On hold')+'</button></div></div>';
+}
+
+
+function openZnoDetail(id){
+  id = requireTaskId(id,'open payment request');
+  if(!id) return;
+
+  state.currentZnoId=id; state.prevScreen='screenList'; var task=findTaskById(id);
+  if(task){
+    document.getElementById('detailTitle').textContent=getInternalNumber(task)||'Payment request';
+    document.getElementById('detailBody').innerHTML=renderDetailBody(task,null);
+    updateDetailFooter(task);
+  }else{
+    document.getElementById('detailTitle').textContent='Loading…';
+    document.getElementById('detailBody').innerHTML=renderSkeletons(2);
+    updateDetailFooter(null);
+  }
+  document.getElementById('detailApproveBtn').disabled=false; switchScreen('screenDetail');
+  authFetch(API.files(id),{})
+    .then(function(r){return r.text().then(function(text){var data=[];try{data=text?JSON.parse(text):[];}catch(e){throw new Error('Server returned non-JSON file list');} if(!r.ok)throw new Error(data&&data.error?data.error:'HTTP '+r.status); if(data&&data.ok===false)throw new Error(data.error||'File loading error'); return data;});})
+    .catch(function(err){showToast(err.message||'Failed to load attachments','error');return [];})
+    .then(function(files){var t=findTaskById(id);if(t){document.getElementById('detailBody').innerHTML=renderDetailBody(t,Array.isArray(files)?files:[]);bindFileClicks();}});
+}
+function findTaskById(id){for(var i=0;i<state.allTasks.length;i++){if(getTaskId(state.allTasks[i])===id)return state.allTasks[i];}return null;}
+function updateDetailFooter(task){
+  var holdBtn=document.getElementById('detailHoldBtn');
+  if(!holdBtn) return;
+  var onHold=task && getOnHold(task);
+  holdBtn.textContent=onHold?'Remove hold':'On hold';
+  holdBtn.className=onHold?'btn btn-warning btn-compact':'btn btn-outline-warning btn-compact';
+}
+function renderDetailBody(z,files){
+  var invoiceCurrencyField=shouldShowInvoiceCurrency(z)?detailField('Invoice Currency',getInvoiceCurrency(z)):'';
+  var paymentCurrencyField=detailField('Payment Currency',getPaymentCurrency(z));
+  var paymentAmountInPaymentCurrencyField=isPaymentCurrencyUSD(z)?'':detailField('Payment Amount in Payment Currency',fmtMoney(getPaymentAmountInPaymentCurrency(z))+' '+displayValue(getPaymentCurrency(z)));
+  var amountLabel=isPaymentCurrencyUSD(z)?'Payment Amount':'USD-equivalent';
+  var amountValue=isPaymentCurrencyUSD(z)?getPaymentAmountInPaymentCurrency(z):getUsdEquivalentAmount(z);
+  var counterpartyCountryField=detailField('Counterparty’s Country',getCounterpartyCountry(z));
+  var counterpartyBankCountryField=detailField('Counterparty’s Bank Country',getCounterpartyBankCountry(z));
+  var beneficiaryBankCountry=getBeneficiaryBankCountry(z);
+  var beneficiaryBankCountryField=beneficiaryBankCountry?detailField('Beneficiary’s Bank Country',beneficiaryBankCountry):'';
+  var vessel=getVessels(z);
+  var detailDescription=getDetailDescription(z);
+  var descriptionField=detailFieldLong('Description',detailDescription);
+  var invoiceComment=getInvoiceComment(z);
+  var filesHtml=files===null?'<div style="padding:14px;font-size:13px;color:var(--text-hint);font-weight:700">⏳ Loading attachments…</div>':(!files.length?'<div style="padding:14px;font-size:13px;color:var(--text-hint);font-weight:700">No attachments</div>':files.map(renderFileItem).join(''));
+  var holdHtml=getOnHold(z)?'<div class="hold-box">⏸ This payment request is currently on hold.</div>':'';
+  return '<div class="detail-section"><div class="detail-section-title">Payment request details</div>'+holdHtml+
+    descriptionField+detailField('Internal number',getInternalNumber(z))+detailField('Invoice number',getInvoiceNumber(z))+detailField('Invoice Date',getInvoiceDate(z))+
+    detailField('Organization',getOrganization(z))+detailField('Counterparty',getCounterparty(z))+counterpartyCountryField+detailField('Beneficiary',getBeneficiary(z))+counterpartyBankCountryField+beneficiaryBankCountryField+
+    '<div class="detail-field amount-field"><span class="detail-label">'+esc(amountLabel)+'</span><div class="detail-amount-big">'+fmtMoney(amountValue)+' <span class="currency-code">USD</span></div></div>'+
+    (parseMoneyNumber(getCounterpartyBalance(z))===null?'':detailField('Counterparty Balance',fmtMoney(getCounterpartyBalance(z))+' USD'))+
+    paymentAmountInPaymentCurrencyField+invoiceCurrencyField+paymentCurrencyField+detailField('Estimated Payment Date',getEstimatedPaymentDate(z)+(isOverduePayment(z)?' (overdue)':''))+detailField('Cost Type',getCostType(z))+(vessel?detailField('Vessels',vessel):'')+detailField('Product',getProduct(z))+(getResponsibleChain(z)?detailFieldLong('Responsible',getResponsibleChain(z)):'')+detailField('Initiator',getInitiator(z))+detailFieldLong('Invoice comment',invoiceComment)+
+    '</div><div class="detail-section"><div class="detail-section-title">Attachments</div>'+filesHtml+'</div>';
+}
+function detailField(label,value){return '<div class="detail-field"><span class="detail-label">'+esc(label)+'</span><span class="detail-value">'+esc(displayValue(value))+'</span></div>';}
+function detailFieldLong(label,value){return '<div class="detail-field vertical"><span class="detail-label">'+esc(label)+'</span><span class="detail-value text-long">'+esc(displayValue(value))+'</span></div>';}
+function displayValue(value){var s=String(value!=null?value:'').trim();return s?s:'—';}
+
+function renderFileItem(f){
+  var fileId=getFileId(f), name=getFileName(f)||'File', ext=getFileExt(f)||'', size=getFileSize(f), url=getFileUrl(f);
+  var fullName=name+(ext && name.toLowerCase().slice(-(ext.length+1))!=='.'+ext?'.'+ext:'');
+  return '<div class="file-item" data-url="'+esc(url||'')+'" data-file-id="'+esc(fileId||'')+'" data-filename="'+esc(name)+'" data-ext="'+esc(ext)+'"><div class="file-icon">'+fileIcon(ext)+'</div><div class="file-info"><div class="file-name">'+esc(fullName)+'</div><div class="file-meta">'+esc(fmtSize(size))+'</div></div><div class="file-action">↗</div></div>';
+}
+function bindFileClicks(){
+  document.querySelectorAll('.file-item').forEach(function(item){item.addEventListener('click',function(){
+    var url=item.getAttribute('data-url');
+    var fileId=item.getAttribute('data-file-id')||'';
+    var openUrl=fileId?API.fileContent(fileId):url;
+
+    if(!openUrl){
+      showToast('File URL was not returned by the server','error');
+      return;
+    }
+
+    openProtectedFile(openUrl);
+  });});
+}
+function openProtectedFile(url){
+  var popup=window.open('about:blank','_blank');
+  authFetch(url,{method:'GET'})
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.blob();
+    })
+    .then(function(blob){
+      var objectUrl=URL.createObjectURL(blob);
+      if(popup) popup.location.href=objectUrl;
+      else window.location.href=objectUrl;
+      setTimeout(function(){URL.revokeObjectURL(objectUrl);},120000);
+    })
+    .catch(function(err){
+      if(popup) popup.close();
+      if(err && err.message!=='AUTH_REQUIRED') showToast(err.message||'Failed to open attachment','error');
+    });
+}
+function openFileModal(url,fileName,ext){
+  var type=getFileType(ext), displayName=fileName+(ext && fileName.toLowerCase().slice(-(ext.length+1))!=='.'+ext?'.'+ext:'');
+  document.getElementById('fileModalTitle').textContent=displayName; document.getElementById('fileDownloadBtn').href=url; var body=document.getElementById('fileModalBody');
+  if(type==='image') body.innerHTML='<img src="'+esc(url)+'" alt="'+esc(displayName)+'" />';
+  else if(type==='pdf') body.innerHTML='<object data="'+esc(url)+'" type="application/pdf" style="width:100%;height:60vh;"><iframe src="'+esc(url)+'" title="'+esc(displayName)+'" style="width:100%;height:60vh;border:none;"></iframe></object>';
+  else if(type==='text'){body.innerHTML='<pre>Loading…</pre>';authFetch(url,{}).then(function(r){return r.ok?r.text():Promise.reject('HTTP '+r.status);}).then(function(txt){body.innerHTML='<pre>'+esc(txt)+'</pre>';}).catch(function(e){body.innerHTML=noPreviewHtml('Failed to load: '+e);});}
+  else body.innerHTML=noPreviewHtml('Preview for this file type is not available.');
+  document.getElementById('fileModal').classList.add('active');
+}
+function noPreviewHtml(msg){return '<div class="no-preview"><div class="np-icon">📄</div><p>'+esc(msg)+'</p></div>';}
+function closeFileModal(){document.getElementById('fileModal').classList.remove('active');document.getElementById('fileModalBody').innerHTML='';}
+
+function requireTaskId(id, actionName){
+  id = String(id || '').trim();
+
+  if (!id) {
+    showToast('Cannot ' + actionName + ': payment request UID is empty', 'error');
+    console.error('Empty UID for action:', actionName, {
+      currentZnoId: state.currentZnoId,
+      currentTask: findTaskById(state.currentZnoId)
+    });
+    return '';
+  }
+
+  return id;
+}
+
+function quickApprove(id,cardEl){
+  id = requireTaskId(id,'approve');
+  if(!id) return;
+
+  state.isActionInProgress=true;
+  showBusy('Approving payment request',busyMessages('approve'));
+
+  postAction(API.approve(),{UID:id})
+    .then(function(){
+      updateBusy('Updating the payment request list');
+      showToast('Payment request approved','success');
+      removeFromCache(id);
+      if(cardEl) cardEl.remove();
+      checkListEmpty();
+      hideBusy();
+    })
+    .catch(function(e){
+      hideBusy();
+      showToast(e.message||'Approval error','error');
+    });
+}
+function approveDetail(){
+  var id = requireTaskId(state.currentZnoId,'approve');
+  if(!id) return;
+
+  var btn=document.getElementById('detailApproveBtn');
+  btn.disabled=true;
+
+  state.isActionInProgress=true;
+  showBusy('Approving payment request',busyMessages('approve'));
+
+  postAction(API.approve(),{UID:id})
+    .then(function(){
+      updateBusy('Updating the payment request list');
+      showToast('Payment request approved','success');
+      removeFromCache(id);
+      goBack();
+      renderZnoList(applySort(applyFilters(state.allTasks)));
+      hideBusy();
+    })
+    .catch(function(e){
+      hideBusy();
+      showToast(e.message||'Approval error','error');
+      btn.disabled=false;
+    });
+}
+function openRejectModal(){openRejectModalForId(state.currentZnoId);}
+function openRejectModalForId(id){state.currentZnoId=id;state.commentMode='reject-single';state.commentIds=id?[id]:[];openCommentModal({title:'Reject payment request',text:'Please provide the rejection reason. It will be visible to the initiator.',buttonText:'Reject',buttonClass:'btn btn-danger'});}
+function openBulkRejectModal(){var ids=state.selectedIds.slice();if(!ids.length)return;state.commentMode='reject-bulk';state.commentIds=ids;openCommentModal({title:'Reject selected payment requests',text:'Please provide one rejection reason for '+ids.length+' selected payment request'+(ids.length===1?'':'s')+'.',buttonText:'Reject selected',buttonClass:'btn btn-danger'});}
+function openHoldModal(){openHoldModalForId(state.currentZnoId);}
+function toggleHoldFromDetail(){
+  var task=findTaskById(state.currentZnoId);
+  if(task && getOnHold(task)) unholdSingle(state.currentZnoId);
+  else openHoldModal();
+}
+function openHoldModalForId(id){state.currentZnoId=id;state.commentMode='hold-single';state.commentIds=id?[id]:[];openCommentModal({title:'Put payment request on hold',text:'Please provide the reason for putting this payment request on hold.',buttonText:'On hold',buttonClass:'btn btn-warning'});}
+function openCommentModal(cfg){var ta=document.getElementById('actionComment');ta.value='';ta.classList.remove('error');document.getElementById('commentModalTitle').textContent=cfg.title;document.getElementById('commentModalText').textContent=cfg.text;document.getElementById('commentConfirmText').textContent=cfg.buttonText;document.getElementById('commentConfirmBtn').className=cfg.buttonClass;document.getElementById('commentModal').classList.add('active');setTimeout(function(){ta.focus();},180);}
+function closeCommentModal(){document.getElementById('commentModal').classList.remove('active');}
+function confirmCommentAction(){var c=document.getElementById('actionComment').value.trim();if(!c){document.getElementById('actionComment').classList.add('error');return;}document.getElementById('actionComment').classList.remove('error');if(state.commentMode==='reject-bulk') return bulkReject(c); if(state.commentMode==='hold-single') return holdSingle(c); rejectSingle(c);}
+function rejectSingle(comment){
+  var id = requireTaskId(state.currentZnoId,'reject');
+  if(!id) return;
+
+  state.isActionInProgress=true;
+  showBusy('Rejecting payment request',busyMessages('reject'));
+
+  postAction(API.reject(),{UID:id,comment:comment})
+    .then(function(){
+      updateBusy('Updating the payment request list');
+      closeCommentModal();
+      showToast('Payment request rejected','info');
+      removeFromCache(id);
+
+      if(document.getElementById('screenDetail').classList.contains('active')){
+        goBack();
+      }
+
+      renderZnoList(applySort(applyFilters(state.allTasks)));
+      checkListEmpty();
+      hideBusy();
+    })
+    .catch(function(e){
+      hideBusy();
+      showToast(e.message||'Reject error','error');
+    });
+}
+function holdSingle(comment){
+  var id = requireTaskId(state.currentZnoId,'put on hold');
+  if(!id) return;
+
+  state.isActionInProgress=true;
+  showBusy('Putting payment request on hold',busyMessages('hold'));
+
+  postAction(API.hold(),{UID:id,comment:comment})
+    .then(function(){
+      updateBusy('Updating the payment request card');
+      closeCommentModal();
+      showToast('Payment request put on hold','warning');
+
+      var task=findTaskById(id);
+      if(task){
+        task.OnHold=true;
+        task.OnHoldComment=comment;
+      }
+
+      renderAdvancedFilterOptions(state.allTasks);
+      updateStatusTabs();
+
+      if(document.getElementById('screenDetail').classList.contains('active')&&task){
+        document.getElementById('detailBody').innerHTML=renderDetailBody(task,[]);
+        updateDetailFooter(task);
+      }
+
+      renderZnoList(applySort(applyFilters(state.allTasks)));
+      hideBusy();
+    })
+    .catch(function(e){
+      hideBusy();
+      showToast(e.message||'On hold error','error');
+    });
+}
+
+function unholdSingle(id){
+  id = requireTaskId(id,'remove hold');
+  if(!id) return;
+
+  state.isActionInProgress=true;
+  showBusy('Removing On hold',busyMessages('unhold'));
+
+  postAction(API.unhold(),{UID:id})
+    .then(function(){
+      updateBusy('Updating the payment request card');
+      showToast('On hold removed','success');
+
+      var task=findTaskById(id);
+      if(task){
+        task.OnHold=false;
+        task.OnHoldComment='';
+        task.ккOnHold=false;
+      }
+
+      renderAdvancedFilterOptions(state.allTasks);
+      updateStatusTabs();
+
+      if(document.getElementById('screenDetail').classList.contains('active')&&task){
+        document.getElementById('detailBody').innerHTML=renderDetailBody(task,[]);
+        updateDetailFooter(task);
+      }
+
+      renderZnoList(applySort(applyFilters(state.allTasks)));
+      hideBusy();
+    })
+    .catch(function(e){
+      hideBusy();
+      showToast(e.message||'Remove hold error','error');
+    });
+}
+
+function updateBulkPanel(){var n=state.selectedIds.length;document.getElementById('bulkCount').textContent=n;document.getElementById('bulkApproveBtn').disabled=n===0;document.getElementById('bulkRejectBtn').disabled=n===0;var cards=document.querySelectorAll('.zno-card');var ids=Array.prototype.map.call(cards,function(c){return c.dataset.id;});var all=ids.length>0&&ids.every(function(id){return state.selectedIds.indexOf(id)!==-1;});document.getElementById('selectAllBtn').textContent=all?'Clear selection':'Select all visible';}
+function updateCheckboxesFromSelection(){document.querySelectorAll('.zno-card').forEach(function(card){var cb=card.querySelector('.card-checkbox');if(cb)cb.checked=state.selectedIds.indexOf(card.dataset.id)!==-1;});}
+function toggleSelectAll(){var cards=document.querySelectorAll('.zno-card');var ids=Array.prototype.map.call(cards,function(c){return c.dataset.id;}).filter(Boolean);var all=ids.length>0&&ids.every(function(id){return state.selectedIds.indexOf(id)!==-1;});if(all){state.selectedIds=state.selectedIds.filter(function(id){return ids.indexOf(id)===-1;});}else{ids.forEach(function(id){if(state.selectedIds.indexOf(id)===-1)state.selectedIds.push(id);});}updateCheckboxesFromSelection();updateBulkPanel();}
+function bulkApprove(){
+  var ids=state.selectedIds.slice();
+  if(!ids.length)return;
+  if(!window.confirm('Approve '+ids.length+' selected payment request'+(ids.length===1?'':'s')+'?'))return;
+
+  state.isActionInProgress=true;
+  showBusy('Approving selected payment requests',busyMessages('bulkApprove',ids.length));
+
+  postAction(API.bulkApprove(),{UIDs:ids})
+    .then(function(results){
+      updateBusy('Updating the payment request list');
+      var arr=Array.isArray(results)?results:[];
+      var ok=arr.filter(isOkResult),fail=arr.filter(function(r){return !isOkResult(r);});
+      ok.forEach(function(r){removeFromCache(r.UID||r.uid||r.ДокументUID||r.DocumentUID);});
+      state.selectedIds=[];
+      updateBulkPanel();
+      renderAdvancedFilterOptions(state.allTasks);
+      renderZnoList(applySort(applyFilters(state.allTasks)));
+      showToast('Approved: '+ok.length+(fail.length?', errors: '+fail.length:''),fail.length?'error':'success');
+      hideBusy();
+    })
+    .catch(function(e){
+      hideBusy();
+      showToast(e.message||'Bulk approval error','error');
+    });
+}
+function bulkReject(comment){
+  var ids=state.commentIds.slice();
+  if(!ids.length)return;
+
+  state.isActionInProgress=true;
+  showBusy('Rejecting selected payment requests',busyMessages('bulkReject',ids.length));
+
+  postAction(API.bulkReject(),{UIDs:ids,comment:comment})
+    .then(function(results){
+      updateBusy('Updating the payment request list');
+      var arr=Array.isArray(results)?results:[];
+      var ok=arr.filter(isOkResult),fail=arr.filter(function(r){return !isOkResult(r);});
+      closeCommentModal();
+      ok.forEach(function(r){removeFromCache(r.UID||r.uid||r.ДокументUID||r.DocumentUID);});
+      state.selectedIds=[];
+      state.commentIds=[];
+      updateBulkPanel();
+      renderAdvancedFilterOptions(state.allTasks);
+      renderZnoList(applySort(applyFilters(state.allTasks)));
+      showToast('Rejected: '+ok.length+(fail.length?', errors: '+fail.length:''),fail.length?'error':'info');
+      checkListEmpty();
+      hideBusy();
+    })
+    .catch(function(e){
+      hideBusy();
+      showToast(e.message||'Bulk reject error','error');
+    });
+}
+function isOkResult(r){return r&&(r.ok===true||r.Статус==='ok'||r.status==='ok');}
+function postAction(url,body){
+  return authFetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'same-origin',
+    body:JSON.stringify(body)
+  }).then(function(r){
+    return r.text().then(function(text){
+      var data={};
+      try{data=text?JSON.parse(text):{};}catch(e){data={error:text};}
+      if(!r.ok)throw new Error(data&&data.error?data.error:'HTTP '+r.status);
+      if(data&&data.ok===false)throw new Error(data.error||'Operation failed');
+      return data;
+    });
+  });
+}
+function removeFromCache(id){if(!id)return;state.allTasks=state.allTasks.filter(function(z){return getTaskId(z)!==id;});state.selectedIds=state.selectedIds.filter(function(x){return x!==id;});var card=document.querySelector('.zno-card[data-id="'+cssEsc(id)+'"]');if(card)card.remove();updateBulkPanel();}
+function checkListEmpty(){var list=document.getElementById('znoList');if(list&&!list.querySelector('.zno-card'))renderZnoList(applySort(applyFilters(state.allTasks)));}
+function renderSkeletons(n){var h='';for(var i=0;i<n;i++){h+='<div class="skel-card"><div class="skeleton skel-line" style="width:55%;margin-bottom:12px;height:14px"></div><div class="skeleton skel-line" style="width:80%"></div><div class="skeleton skel-line" style="width:65%"></div><div class="skeleton skel-line" style="width:40%;margin-top:10px;height:18px"></div></div>';}return h;}
+function showToast(msg,type){var el=document.createElement('div');el.className='toast toast-'+(type||'info');el.innerHTML=esc(msg);document.getElementById('toastContainer').appendChild(el);setTimeout(function(){el.remove();},3000);}
+function fileIcon(ext){var map={pdf:'📄',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',xlsx:'📊',xls:'📊',doc:'📝',docx:'📝',msg:'✉️',txt:'📋',csv:'📋',xml:'📋',json:'📋'};return map[(ext||'').toLowerCase()]||'📎';}
+function parseMoneyNumber(value){if(value===undefined||value===null||value==='')return null;if(typeof value==='number')return isFinite(value)?value:null;var s=String(value).trim().replace(/\s+/g,'');if(!s)return null;var c=s.lastIndexOf(','),d=s.lastIndexOf('.'),pos=Math.max(c,d);if(pos>=0){var intPart=s.slice(0,pos).replace(/[.,]/g,''),frac=s.slice(pos+1).replace(/[^\d]/g,'');s=intPart+'.'+frac;}else{s=s.replace(/[^\d-]/g,'');}var n=Number(s);return isNaN(n)?null:n;}
+function fmtMoney(n){var num=parseMoneyNumber(n);if(num===null)return '—';return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2}).format(num).replace(/[\u00A0\u202F]/g,' ');}
+function fmtSize(bytes){var n=Number(bytes);if(!n||isNaN(n))return '';if(n<1024)return n+' B';if(n<1048576)return Math.round(n/1024)+' KB';return (n/1048576).toFixed(1)+' MB';}
+function esc(str){return String(str!=null?str:'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+function cssEsc(str){if(window.CSS&&CSS.escape)return CSS.escape(str);return String(str).replace(/"/g,'\\"');}
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(function (registration) {
+          console.log('PWA Service Worker registered:', registration.scope);
+          return navigator.serviceWorker.ready;
+        })
+        .then(function (registration) {
+          console.log('PWA Service Worker activated:', registration.scope);
+          showToast('Service Worker: activated ✓', 'success');
+        })
+        .catch(function (error) {
+          console.error('PWA Service Worker registration failed:', error);
+          showToast('Service Worker: registration failed ✕', 'error');
+        });
+    });
+  } else {
+    window.addEventListener('load', function () {
+      showToast('Service Worker: not supported ✕', 'error');
+    });
+  }
+
+  function syncBadgeWithZnoCount() {
+    var count = Array.isArray(state.allTasks) ? state.allTasks.length : 0;
+
+    if (count > 0) {
+      if (!('setAppBadge' in navigator)) {
+        console.warn('Badge API is not supported');
+        return;
+      }
+
+      navigator.setAppBadge(count)
+        .then(function () {
+          console.log('PWA Badge synced with ZNO count:', count);
+        })
+        .catch(function (error) {
+          console.error('PWA Badge sync failed:', error);
+        });
+    } else {
+      if (!('clearAppBadge' in navigator)) {
+        console.warn('Badge API is not supported');
+        return;
+      }
+
+      navigator.clearAppBadge()
+        .then(function () {
+          console.log('PWA Badge cleared: no ZNO tasks');
+        })
+        .catch(function (error) {
+          console.error('PWA Badge clear failed:', error);
+        });
+    }
+  }
+
+  function enableNotifications() {
+    if (!('Notification' in window)) {
+      showToast('Notifications API is not supported ✕', 'error');
+      return;
+    }
+
+    Notification.requestPermission()
+      .then(function (permission) {
+        if (permission === 'granted') {
+          showToast('Notifications: allowed ✓', 'success');
+        } else if (permission === 'denied') {
+          showToast('Notifications: denied', 'warning');
+        } else {
+          showToast('Notifications: permission not granted', 'info');
+        }
+      })
+      .catch(function (error) {
+        console.error('Notification permission failed:', error);
+        showToast('Notification permission failed ✕', 'error');
+      });
+  }
+
+  function setTestBadge(value) {
+    if (!('setAppBadge' in navigator)) {
+      showToast('Badge API is not supported ✕', 'error');
+      return;
+    }
+    navigator.setAppBadge(value)
+      .then(function () {
+        showToast('Badge set to ' + value + ' ✓', 'success');
+      })
+      .catch(function (error) {
+        console.error('Badge set failed:', error);
+        showToast('Badge set failed ✕', 'error');
+      });
+  }
+
+  function clearTestBadge() {
+    if (!('clearAppBadge' in navigator)) {
+      showToast('Badge API is not supported ✕', 'error');
+      return;
+    }
+    navigator.clearAppBadge()
+      .then(function () {
+        showToast('Badge cleared ✓', 'success');
+      })
+      .catch(function (error) {
+        console.error('Badge clear failed:', error);
+        showToast('Badge clear failed ✕', 'error');
+      });
+  }
+</script>
+
+</body>
+</html>

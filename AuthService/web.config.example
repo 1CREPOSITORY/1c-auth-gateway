@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="DataDirectory" value="C:\inetpub\authservice-data" />
+    <add key="OneCBasicBase" value="https://1c.domain.com/UH_Medvedev_test/hs/mobile" />
+    <add key="OneCOsAuthBase" value="https://127.0.0.1/UH_Medvedev_test_osauth/hs/mobile" />
+    <add key="ExpectedCertThumbprint" value="" />
+  </appSettings>
+  <system.web>
+    <authentication mode="None" />
+    <sessionState mode="Off" />
+    <customErrors mode="RemoteOnly" />
+    <compilation debug="false" targetFramework="4.8" />
+    <httpRuntime targetFramework="4.8" enableVersionHeader="false" />
+  </system.web>
+  <system.webServer>
+    <validation validateIntegratedModeConfiguration="false" />
+    <modules runAllManagedModulesForAllRequests="true">
+      <add name="AuthServiceModule" type="AuthService.AuthModule" />
+    </modules>
+  </system.webServer>
+</configuration>
